@@ -7,12 +7,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_CXX_STANDARD 17)
 
-# Parsers
-
-# Primitives
-
-#Renderers
 add_subdirectory(lib/Raylib)
 
-# Core
-add_subdirectory(ZappyGUI/)
+add_subdirectory(ZappyGui/)
