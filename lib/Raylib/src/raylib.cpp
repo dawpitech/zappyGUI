@@ -1,8 +1,8 @@
 //
 // EPITECH PROJECT, 2025
-// Draw
+// zappyGUI
 // File description:
-// Draw the entity for SFML
+// caca
 //
 
 #include "../IRenderer.hpp"
