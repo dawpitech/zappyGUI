@@ -1,3 +1,5 @@
 zappygui
 .build
 *.so
+.envrc
+.direnv
