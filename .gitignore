@@ -1,4 +1,4 @@
-zappygui
+zappy_gui
 .build
 *.so
 .envrc
