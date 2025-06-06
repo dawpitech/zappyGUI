@@ -1,3 +1,8 @@
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <iostream>
 #include "Core.hpp"
 
@@ -21,10 +26,39 @@ GUI::Core::Core(char **argv)
         throw CoreError("Missing -p or -h argument");
 }
 
+bool GUI::Core::connect_to_server()
+{
+    _server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (_server_fd == -1) {
+        std::cerr << "Error creating socket" << std::endl;
+        return false;
+    }
+
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(_port);
+    
+    if (inet_pton(AF_INET, _hostname.c_str(), &server_addr.sin_addr) <= 0) {
+        std::cerr << "Invalid address" << std::endl;
+        return false;
+    }
+
+    if (connect(_server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+        std::cerr << "Connection failed" << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 void GUI::Core::run()
 {
-    std::cout << _port << " && " << _hostname;
+    std::cout << "Connecting to " << _hostname << ":" << _port << std::endl;
+
+    if (!connect_to_server())
+        throw CoreError("Failed to connect to server");
 }
+
 
 int execute_zappygui(char **argv)
 {

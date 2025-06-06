@@ -4,3 +4,5 @@ zappy_gui
 .envrc
 .direnv
 .vscode/
+zappy_server
+zappy_ref-v3.0.1/

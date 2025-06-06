@@ -20,6 +20,8 @@ namespace GUI {
             Core(char **argv);
 
             void run();
+
+            bool connect_to_server();
         private:
             /* Map _map; */
             /* Layer _layer; */
@@ -28,5 +30,7 @@ namespace GUI {
 
             int _port;
             std::string _hostname;
+
+            int _server_fd;
     };
 } // namespace GUI
