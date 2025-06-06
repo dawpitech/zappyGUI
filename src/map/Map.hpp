@@ -1,7 +1,8 @@
 #include <array>
 #include <cstddef>
 #include <vector>
-#include "../IResource.hpp"
+#include "../resource/IResource.hpp"
+
 namespace GUI {
     template <std::size_t width, std::size_t height>
     class Map {

@@ -1,4 +1,5 @@
 #include <iostream>
+#include "core/Core.hpp"
 
 static void display_help(void)
 {
@@ -25,5 +26,5 @@ int main(int argc, char **argv)
 {
     if (check_args(argc, argv) == 84)
         return 84;
-    return 0;
+    return execute_zappygui(argv);
 }
