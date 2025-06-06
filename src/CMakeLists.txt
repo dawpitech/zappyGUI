@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCE_FILES
-    src/main.cpp
+    main.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

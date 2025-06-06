@@ -3,3 +3,4 @@ zappygui
 *.so
 .envrc
 .direnv
+.vscode/

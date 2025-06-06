@@ -1,5 +1,5 @@
 #include <iostream>
-#include "map/Map.hpp"
+#include "Map.hpp"
 namespace GUI {
     class Core {
         public:
