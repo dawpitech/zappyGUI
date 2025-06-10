@@ -3,6 +3,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     utils.url = "github:numtide/flake-utils";
   };
+
   outputs = { self, nixpkgs, utils }:
     utils.lib.eachDefaultSystem (system:
       let
@@ -24,6 +25,7 @@
             pkg-config
           ] ++ deps;
         };
+
         formatter = pkgs.nixpkgs-fmt;
       });
 }
