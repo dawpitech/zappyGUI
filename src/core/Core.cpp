@@ -1,14 +1,21 @@
-#include <iostream>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <poll.h>
-#include <sstream>
-#include "Core.hpp"
+/*
+** EPITECH PROJECT, 2025
+** ZAPPY GUI
+** File description:
+** core.cpp
+*/
 
-GUI::Core::Core(char **argv) : _server_fd(-1), _connected(false)
+#include "Core.hpp"
+#include "../communication/CommunicationBuffer.hpp"
+#include "../network/NetworkManager.hpp"
+#include <iostream>
+#include <sstream>
+
+GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _server_fd(-1)
 {
+    _network_manager = std::make_unique<NetworkManager>();
+    _comm_buffer = std::make_unique<CommunicationBuffer>();
+    
     for (int i = 1; i <= 3; ++i) {
         std::string arg = argv[i];
         if (arg == "-p") {
@@ -19,8 +26,9 @@ GUI::Core::Core(char **argv) : _server_fd(-1), _connected(false)
             } catch (const std::out_of_range &) {
                 throw CoreError("Invalid port: number out of range");
             }
-        } else if (arg == "-h")
+        } else if (arg == "-h") {
             _hostname = argv[i + 1];
+        }
     }
 
     if (_port == 0 || _hostname.empty())
@@ -29,57 +37,16 @@ GUI::Core::Core(char **argv) : _server_fd(-1), _connected(false)
 
 GUI::Core::~Core()
 {
-    if (_server_fd != -1)
-        close(_server_fd);
 }
 
 bool GUI::Core::connect_to_server()
 {
-    _server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (_server_fd == -1) {
-        std::cerr << "Error creating socket" << std::endl;
+    if (!_network_manager->create_and_connect(_hostname, _port))
         return false;
-    }
-
-    struct sockaddr_in server_addr;
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(_port);
     
-    if (inet_pton(AF_INET, _hostname.c_str(), &server_addr.sin_addr) <= 0) {
-        std::cerr << "Invalid address" << std::endl;
+    if (!_network_manager->authenticate()) 
         return false;
-    }
-
-    if (connect(_server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        std::cerr << "Connection failed" << std::endl;
-        return false;
-    }
-    return authenticate();
-}
-
-bool GUI::Core::authenticate()
-{
-    char buffer[1024];
     
-    ssize_t bytes_read = recv(_server_fd, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_read <= 0) {
-        std::cerr << "Failed to receive WELCOME" << std::endl;
-        return false;
-    }
-    
-    buffer[bytes_read] = '\0';
-    std::cout << "Received: " << buffer;
-    
-    if (std::string(buffer) != "WELCOME\n") {
-        std::cerr << "Expected WELCOME, got: " << buffer << std::endl;
-        return false;
-    }
-
-    if (send(_server_fd, "GRAPHIC\n", 8, 0) != 8) {
-        std::cerr << "Failed to send GRAPHIC" << std::endl;
-        return false;
-    }
-    std::cout << "Successfully authenticated as GUI" << std::endl;
     _connected = true;
     return true;
 }
@@ -199,7 +166,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         int resource;
         iss >> player_id_str >> resource;
         std::cout << "Player " << player_id_str << " collected resource " << resource << std::endl;
-    }  else if (command == "pdi") {
+    } else if (command == "pdi") {
         std::string player_id_str;
         iss >> player_id_str;
         std::cout << "Player " << player_id_str << " died" << std::endl;
@@ -232,24 +199,18 @@ void GUI::Core::handle_server_message(const std::string &message)
         std::string server_message;
         std::getline(iss, server_message);
         std::cout << "Server message:" << server_message << std::endl;
-    } else if (command == "suc")
+    } else if (command == "suc") {
         std::cout << "Unknown command sent to server" << std::endl;
-    else if (command == "sbp")
+    } else if (command == "sbp") {
         std::cout << "Bad parameters sent to server" << std::endl;
-    else
+    } else {
         std::cout << "Unknown message from server: " << message << std::endl;
+    }
 }
 
 void GUI::Core::send_command(const std::string& command)
 {
-    if (!_connected) {
-        std::cerr << "Not connected to server" << std::endl;
-        return;
-    }
-    
-    std::string cmd = command + "\n";
-    ssize_t sent = send(_server_fd, cmd.c_str(), cmd.length(), 0);
-    if (sent != static_cast<ssize_t>(cmd.length()))
+    if (!_network_manager->send_command(command))
         std::cerr << "Failed to send command: " << command << std::endl;
 }
 
@@ -260,22 +221,18 @@ void GUI::Core::run()
     if (!connect_to_server()) {
         throw CoreError("Failed to connect to server");
     }
+    
     send_command("msz");
     send_command("mct"); 
     send_command("tna");
     send_command("sgt");
-    struct pollfd pfd;
-    pfd.fd = _server_fd;
-    pfd.events = POLLIN;
 
     std::cout << "GUI connected and listening for server messages..." << std::endl;
 
     while (_connected) {
-        int ret = poll(&pfd, 1, 100);
-        
-        if (ret > 0 && (pfd.revents & POLLIN)) {
+        if (_network_manager->poll_for_data()) {
             char buffer[4096];
-            ssize_t bytes_read = recv(_server_fd, buffer, sizeof(buffer) - 1, 0);
+            ssize_t bytes_read = _network_manager->receive_data(buffer, sizeof(buffer));
             
             if (bytes_read <= 0) {
                 std::cout << "Server disconnected" << std::endl;
@@ -284,22 +241,11 @@ void GUI::Core::run()
             }
             
             buffer[bytes_read] = '\0';
-            _input_buffer += buffer;
+            _comm_buffer->append_data(buffer);
             
-            size_t pos;
-            while ((pos = _input_buffer.find('\n')) != std::string::npos) {
-                std::string message = _input_buffer.substr(0, pos);
-                _input_buffer = _input_buffer.substr(pos + 1);
-                
-                if (!message.empty()) {
-                    handle_server_message(message);
-                }
-            }
-        }
-        
-        if (ret < 0) {
-            std::cerr << "Poll error" << std::endl;
-            break;
+            auto messages = _comm_buffer->extract_all_messages();
+            for (const auto& message : messages)
+                handle_server_message(message);
         }
     }
 }

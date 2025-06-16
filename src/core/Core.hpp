@@ -1,44 +1,51 @@
+/*
+** EPITECH PROJECT, 2025
+** ZAPPY GUI
+** File description:
+** Core.hpp
+*/
+
 #pragma once
 
-#include <iostream>
 #include <string>
-
-int execute_zappygui(char **argv);
+#include <memory>
+#include <stdexcept>
 
 namespace GUI {
-    class Core {
-        public:
-            class CoreError : public std::exception {
-                public:
-                    CoreError(const std::string &msg) : _msg(msg) {};
-                    [[nodiscard]] const char *what() const noexcept override
-                    {
-                        return this->_msg.c_str();
-                    }
-
-                private:
-                    std::string _msg;
-            };
-            
-            Core(char **argv);
-            ~Core();
-
-            void run();
-
-        private:
-            bool connect_to_server();
-            bool authenticate();
-            void handle_server_message(const std::string& message);
-            void send_command(const std::string& command);
-
-            int _server_fd;
-            bool _connected;
-            std::string _input_buffer;
-            
-            int _port = 0;
-            std::string _hostname;
-            
-            std::size_t _timeUnit = 0;
-            std::size_t _time = 0;
-    };
+    class NetworkManager;
+    class CommunicationBuffer;
 } // namespace GUI
+
+namespace GUI {
+
+    class Core {
+    public:
+        class CoreError : public std::runtime_error {
+        public:
+            CoreError(const std::string& message) : std::runtime_error(message) {}
+        };
+
+        Core(char **argv);
+        ~Core();
+        
+        void run();
+        void send_command(const std::string& command);
+
+    private:
+        bool connect_to_server();
+        void handle_server_message(const std::string &message);
+        
+        std::unique_ptr<NetworkManager> _network_manager;
+        std::unique_ptr<CommunicationBuffer> _comm_buffer;
+        
+        std::string _hostname;
+        int _port;
+        int _timeUnit;
+        bool _connected;
+        
+        int _server_fd;
+    };
+
+} // namespace GUI
+
+int execute_zappygui(char **argv);

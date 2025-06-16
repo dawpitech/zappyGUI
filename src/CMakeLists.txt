@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SOURCE_FILES
     main.cpp
     core/Core.cpp
+    communication/CommunicationBuffer.cpp
+    network/NetworkManager.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
