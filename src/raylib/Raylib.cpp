@@ -146,3 +146,31 @@ bool GUI::RaylibEngine::collision(Vector2 p1, Vector2 s1, Vector2 p2, Vector2 s2
     return (p1.x < p2.x + s2.x && p1.x + s1.x > p2.x &&
             p1.y < p2.y + s2.y && p1.y + s1.y > p2.y);
 }
+
+void GUI::RaylibEngine::beginMode3D(Camera3D camera) {
+    BeginMode3D(camera);
+}
+
+void GUI::RaylibEngine::endMode3D() {
+    EndMode3D();
+}
+
+void GUI::RaylibEngine::drawCube(Vector3 position, float width, float height, float length, Color color) {
+    DrawCube(position, width, height, length, color);
+}
+
+void GUI::RaylibEngine::drawCubeWires(Vector3 position, float width, float height, float length, Color color) {
+    DrawCubeWires(position, width, height, length, color);
+}
+
+void GUI::RaylibEngine::drawLine3D(Vector3 startPos, Vector3 endPos, Color color) {
+    DrawLine3D(startPos, endPos, color);
+}
+
+void GUI::RaylibEngine::clearBackground(Color color) {
+    ClearBackground(color);
+}
+
+bool GUI::RaylibEngine::windowShouldClose() {
+    return WindowShouldClose();
+}

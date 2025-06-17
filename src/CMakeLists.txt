@@ -10,6 +10,7 @@ set(SOURCE_FILES
     core/Core.cpp
     communication/CommunicationBuffer.cpp
     network/NetworkManager.cpp
+    raylib/Raylib.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

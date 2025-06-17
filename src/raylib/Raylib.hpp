@@ -58,5 +58,13 @@ namespace GUI {
             Vector2 mousePos();
 
             bool collision(Vector2 p1, Vector2 s1, Vector2 p2, Vector2 s2);
+
+            void beginMode3D(Camera3D camera);
+            void endMode3D();
+            void drawCube(Vector3 position, float width, float height, float length, Color color);
+            void drawCubeWires(Vector3 position, float width, float height, float length, Color color);
+            void drawLine3D(Vector3 startPos, Vector3 endPos, Color color);
+            void clearBackground(Color color);
+            bool windowShouldClose();
     };
 } // namespace GUI
