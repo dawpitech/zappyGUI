@@ -10,13 +10,13 @@
 #include <string>
 #include <memory>
 #include <stdexcept>
+#include "../../include/raylib-cpp.hpp"
 
 namespace GUI {
+
     class NetworkManager;
+    
     class CommunicationBuffer;
-} // namespace GUI
-
-namespace GUI {
 
     class Core {
     public:

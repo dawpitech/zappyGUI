@@ -11,6 +11,47 @@
 #include <iostream>
 #include <sstream>
 
+void DrawGrid3D(int width, int height, float tileSize)
+{
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
+            Vector3 position = { x * tileSize, 0.0f, y * tileSize };
+            DrawCube(position, tileSize, 0.1f, tileSize, GRAY);
+            DrawCubeWires(position, tileSize, 0.1f, tileSize, DARKGRAY);
+        }
+    }
+}
+
+void render_grid_3d(int width, int height)
+{
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
+    const float tileSize = 1.0f;
+
+    raylib::Window window(screenWidth, screenHeight, "Zappy GUI - 3D Grid");
+    raylib::Camera3D camera(
+        { width / 2.0f, 20.0f, height * 1.5f }, // position
+        { width / 2.0f, 0.0f, height / 2.0f },  // target
+        { 0.0f, 1.0f, 0.0f },                  // up
+        45.0f, CAMERA_PERSPECTIVE
+    );
+
+
+    while (!window.ShouldClose()) {
+        camera.Update(CAMERA_ORBITAL);
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        BeginMode3D(camera);
+        DrawGrid3D(width, height, tileSize);
+        EndMode3D();
+
+        DrawText("Use mouse and arrows to move the camera", 10, 10, 20, DARKGRAY);
+        EndDrawing();
+    }
+}
+
 GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _server_fd(-1)
 {
     _network_manager = std::make_unique<NetworkManager>();
@@ -67,6 +108,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         int height;
         iss >> width >> height;
         std::cout << "Map size: " << width << "x" << height << std::endl;
+
     } else if (command == "bct") {
         int x;
         int y;
@@ -216,37 +258,75 @@ void GUI::Core::send_command(const std::string& command)
 
 void GUI::Core::run()
 {
-    std::cout << "Connecting to " << _hostname << ":" << _port << std::endl;
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
 
-    if (!connect_to_server()) {
+    raylib::Window window(screenWidth, screenHeight, "Zappy GUI - 3D Grid");
+
+    raylib::Camera3D camera(
+        { 10.0f, 20.0f, 30.0f }, // position
+        { 0.0f, 0.0f, 0.0f },    // target
+        { 0.0f, 1.0f, 0.0f },    // up vector
+        45.0f, CAMERA_PERSPECTIVE
+    );
+
+    SetTargetFPS(60);
+
+    int mapWidth = 10;
+    int mapHeight = 10;
+    bool gridReady = false;
+
+    std::cout << "Connecting to " << _hostname << ":" << _port << std::endl;
+    if (!connect_to_server())
         throw CoreError("Failed to connect to server");
-    }
-    
+
     send_command("msz");
-    send_command("mct"); 
+    send_command("mct");
     send_command("tna");
     send_command("sgt");
 
-    std::cout << "GUI connected and listening for server messages..." << std::endl;
-
-    while (_connected) {
-        if (_network_manager->poll_for_data()) {
+    while (!window.ShouldClose()) {
+        if (_connected && _network_manager->poll_for_data()) {
             char buffer[4096];
-            ssize_t bytes_read = _network_manager->receive_data(buffer, sizeof(buffer));
-            
+            ssize_t bytes_read = _network_manager->receive_data(buffer, sizeof(buffer) - 1);
             if (bytes_read <= 0) {
                 std::cout << "Server disconnected" << std::endl;
                 _connected = false;
                 break;
             }
-            
+
             buffer[bytes_read] = '\0';
             _comm_buffer->append_data(buffer);
-            
+
             auto messages = _comm_buffer->extract_all_messages();
-            for (const auto& message : messages)
+            for (const auto& message : messages) {
+                std::istringstream iss(message);
+                std::string command;
+                iss >> command;
+
+                if (command == "msz") {
+                    iss >> mapWidth >> mapHeight;
+                    std::cout << "Map size: " << mapWidth << "x" << mapHeight << std::endl;
+                    gridReady = true;
+                }
+
                 handle_server_message(message);
+            }
         }
+
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+            camera.Update(CAMERA_ORBITAL);
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        BeginMode3D(camera);
+        if (gridReady)
+            DrawGrid3D(mapWidth, mapHeight, 1.0f);
+        EndMode3D();
+
+        DrawText("Hold right mouse button and drag to move camera", 10, 10, 20, DARKGRAY);
+        EndDrawing();
     }
 }
 
