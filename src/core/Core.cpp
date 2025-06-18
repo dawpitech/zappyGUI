@@ -11,52 +11,11 @@
 #include <iostream>
 #include <sstream>
 
-void DrawGrid3D(int width, int height, float tileSize)
-{
-    for (int x = 0; x < width; ++x) {
-        for (int y = 0; y < height; ++y) {
-            Vector3 position = { x * tileSize, 0.0f, y * tileSize };
-            DrawCube(position, tileSize, 0.1f, tileSize, GRAY);
-            DrawCubeWires(position, tileSize, 0.1f, tileSize, DARKGRAY);
-        }
-    }
-}
-
-void render_grid_3d(int width, int height)
-{
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
-    const float tileSize = 1.0f;
-
-    raylib::Window window(screenWidth, screenHeight, "Zappy GUI - 3D Grid");
-    raylib::Camera3D camera(
-        { width / 2.0f, 20.0f, height * 1.5f }, // position
-        { width / 2.0f, 0.0f, height / 2.0f },  // target
-        { 0.0f, 1.0f, 0.0f },                  // up
-        45.0f, CAMERA_PERSPECTIVE
-    );
-
-
-    while (!window.ShouldClose()) {
-        camera.Update(CAMERA_ORBITAL);
-
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-
-        BeginMode3D(camera);
-        DrawGrid3D(width, height, tileSize);
-        EndMode3D();
-
-        DrawText("Use mouse and arrows to move the camera", 10, 10, 20, DARKGRAY);
-        EndDrawing();
-    }
-}
-
 GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _server_fd(-1)
 {
     _network_manager = std::make_unique<NetworkManager>();
     _comm_buffer = std::make_unique<CommunicationBuffer>();
-    
+
     for (int i = 1; i <= 3; ++i) {
         std::string arg = argv[i];
         if (arg == "-p") {
@@ -84,10 +43,10 @@ bool GUI::Core::connect_to_server()
 {
     if (!_network_manager->create_and_connect(_hostname, _port))
         return false;
-    
-    if (!_network_manager->authenticate()) 
+
+    if (!_network_manager->authenticate())
         return false;
-    
+
     _connected = true;
     return true;
 }
@@ -96,7 +55,7 @@ void GUI::Core::handle_server_message(const std::string &message)
 {
     if (message.empty())
         return;
-    
+
     std::istringstream iss(message);
     std::string command;
     iss >> command;
@@ -135,7 +94,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         int orientation;
         int level;
         iss >> player_id_str >> x >> y >> orientation >> level >> team_name;
-        std::cout << "Player " << player_id_str << " connected at (" 
+        std::cout << "Player " << player_id_str << " connected at ("
                   << x << "," << y << ") team: " << team_name << std::endl;
     } else if (command == "ppo") {
         std::string player_id_str;
@@ -143,7 +102,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         int y;
         int orientation;
         iss >> player_id_str >> x >> y >> orientation;
-        std::cout << "Player " << player_id_str << " position: (" 
+        std::cout << "Player " << player_id_str << " position: ("
                   << x << "," << y << ") orientation: " << orientation << std::endl;
     } else if (command == "plv") {
         std::string player_id_str;
@@ -162,8 +121,8 @@ void GUI::Core::handle_server_message(const std::string &message)
         int q5;
         int q6;
         iss >> player_id_str >> x >> y >> q0 >> q1 >> q2 >> q3 >> q4 >> q5 >> q6;
-        std::cout << "Player " << player_id_str << " inventory at (" 
-                  << x << "," << y << "): " << q0 << " " << q1 << " " << q2 
+        std::cout << "Player " << player_id_str << " inventory at ("
+                  << x << "," << y << "): " << q0 << " " << q1 << " " << q2
                   << " " << q3 << " " << q4 << " " << q5 << " " << q6 << std::endl;
     } else if (command == "pex") {
         std::string player_id_str;
@@ -192,7 +151,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         int y;
         int result;
         iss >> x >> y >> result;
-        std::cout << "Incantation ended at (" << x << "," << y << ") result: " 
+        std::cout << "Incantation ended at (" << x << "," << y << ") result: "
                   << (result != 0 ? "success" : "failure") << std::endl;
     } else if (command == "pfk") {
         std::string player_id_str;
@@ -218,7 +177,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         int x;
         int y;
         iss >> egg_id_str >> player_id_str >> x >> y;
-        std::cout << "New egg " << egg_id_str << " laid by " << player_id_str 
+        std::cout << "New egg " << egg_id_str << " laid by " << player_id_str
                   << " at (" << x << "," << y << ")" << std::endl;
     } else if (command == "ebo") {
         std::string egg_id_str;
