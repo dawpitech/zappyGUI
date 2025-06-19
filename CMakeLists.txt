@@ -12,6 +12,7 @@ set(SOURCE_FILES
     src/communication/CommunicationBuffer.cpp
     src/network/NetworkManager.cpp
     src/raylib/Raylib.cpp
+    src/map/Map.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

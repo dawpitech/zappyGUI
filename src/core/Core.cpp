@@ -10,8 +10,9 @@
 #include "../network/NetworkManager.hpp"
 #include <iostream>
 #include <sstream>
+#include "../map/Map.hpp"
 
-GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _server_fd(-1)
+GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _server_fd(-1), _showInfoOverlay(false)
 {
     _network_manager = std::make_unique<NetworkManager>();
     _comm_buffer = std::make_unique<CommunicationBuffer>();
@@ -66,6 +67,8 @@ void GUI::Core::handle_server_message(const std::string &message)
         int width;
         int height;
         iss >> width >> height;
+        _mapInfo.width = width;
+        _mapInfo.height = height;
         std::cout << "Map size: " << width << "x" << height << std::endl;
 
     } else if (command == "bct") {
@@ -79,12 +82,20 @@ void GUI::Core::handle_server_message(const std::string &message)
         int q5;
         int q6;
         iss >> x >> y >> q0 >> q1 >> q2 >> q3 >> q4 >> q5 >> q6;
+        
+        TileInfo tile;
+        tile.x = x;
+        tile.y = y;
+        tile.resources = {q0, q1, q2, q3, q4, q5, q6};
+        _mapInfo.tiles[{x, y}] = tile;
+        
         std::cout << "Tile (" << x << "," << y << ") resources: "
                   << q0 << " " << q1 << " " << q2 << " " << q3 << " "
                   << q4 << " " << q5 << " " << q6 << std::endl;
     } else if (command == "tna") {
         std::string team_name;
         iss >> team_name;
+        _gameInfo.teams.push_back(team_name);
         std::cout << "Team: " << team_name << std::endl;
     } else if (command == "pnw") {
         std::string player_id_str;
@@ -94,6 +105,16 @@ void GUI::Core::handle_server_message(const std::string &message)
         int orientation;
         int level;
         iss >> player_id_str >> x >> y >> orientation >> level >> team_name;
+        
+        PlayerInfo player;
+        player.id = player_id_str;
+        player.x = x;
+        player.y = y;
+        player.orientation = orientation;
+        player.level = level;
+        player.team = team_name;
+        _gameInfo.players[player_id_str] = player;
+        
         std::cout << "Player " << player_id_str << " connected at ("
                   << x << "," << y << ") team: " << team_name << std::endl;
     } else if (command == "ppo") {
@@ -102,12 +123,24 @@ void GUI::Core::handle_server_message(const std::string &message)
         int y;
         int orientation;
         iss >> player_id_str >> x >> y >> orientation;
+        
+        if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
+            _gameInfo.players[player_id_str].x = x;
+            _gameInfo.players[player_id_str].y = y;
+            _gameInfo.players[player_id_str].orientation = orientation;
+        }
+        
         std::cout << "Player " << player_id_str << " position: ("
                   << x << "," << y << ") orientation: " << orientation << std::endl;
     } else if (command == "plv") {
         std::string player_id_str;
         int level;
         iss >> player_id_str >> level;
+        
+        if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
+            _gameInfo.players[player_id_str].level = level;
+        }
+        
         std::cout << "Player " << player_id_str << " level: " << level << std::endl;
     } else if (command == "pin") {
         std::string player_id_str;
@@ -121,6 +154,11 @@ void GUI::Core::handle_server_message(const std::string &message)
         int q5;
         int q6;
         iss >> player_id_str >> x >> y >> q0 >> q1 >> q2 >> q3 >> q4 >> q5 >> q6;
+        
+        if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
+            _gameInfo.players[player_id_str].inventory = {q0, q1, q2, q3, q4, q5, q6};
+        }
+        
         std::cout << "Player " << player_id_str << " inventory at ("
                   << x << "," << y << "): " << q0 << " " << q1 << " " << q2
                   << " " << q3 << " " << q4 << " " << q5 << " " << q6 << std::endl;
@@ -170,6 +208,7 @@ void GUI::Core::handle_server_message(const std::string &message)
     } else if (command == "pdi") {
         std::string player_id_str;
         iss >> player_id_str;
+        _gameInfo.players.erase(player_id_str);
         std::cout << "Player " << player_id_str << " died" << std::endl;
     } else if (command == "enw") {
         std::string egg_id_str;
@@ -177,24 +216,36 @@ void GUI::Core::handle_server_message(const std::string &message)
         int x;
         int y;
         iss >> egg_id_str >> player_id_str >> x >> y;
+        
+        EggInfo egg;
+        egg.id = egg_id_str;
+        egg.player_id = player_id_str;
+        egg.x = x;
+        egg.y = y;
+        _gameInfo.eggs[egg_id_str] = egg;
+        
         std::cout << "New egg " << egg_id_str << " laid by " << player_id_str
                   << " at (" << x << "," << y << ")" << std::endl;
     } else if (command == "ebo") {
         std::string egg_id_str;
         iss >> egg_id_str;
+        _gameInfo.eggs.erase(egg_id_str);
         std::cout << "Egg " << egg_id_str << " hatched" << std::endl;
     } else if (command == "edi") {
         std::string egg_id_str;
         iss >> egg_id_str;
+        _gameInfo.eggs.erase(egg_id_str);
         std::cout << "Egg " << egg_id_str << " died" << std::endl;
     } else if (command == "sgt") {
         int time_unit;
         iss >> time_unit;
         _timeUnit = time_unit;
+        _gameInfo.timeUnit = time_unit;
         std::cout << "Time unit: " << time_unit << std::endl;
     } else if (command == "seg") {
         std::string team_name;
         iss >> team_name;
+        _gameInfo.winner = team_name;
         std::cout << "Game ended, winner: " << team_name << std::endl;
     } else if (command == "smg") {
         std::string server_message;
@@ -209,6 +260,78 @@ void GUI::Core::handle_server_message(const std::string &message)
     }
 }
 
+void GUI::Core::drawInfoOverlay()
+{
+    if (!_showInfoOverlay) return;
+
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
+    const int overlayWidth = 400;
+    const int overlayHeight = 600;
+    const int overlayX = screenWidth - overlayWidth - 20;
+    const int overlayY = 20;
+
+    DrawRectangle(overlayX, overlayY, overlayWidth, overlayHeight, Fade(BLACK, 0.8f));
+    DrawRectangleLines(overlayX, overlayY, overlayWidth, overlayHeight, WHITE);
+
+    int yOffset = overlayY + 20;
+    const int lineHeight = 20;
+
+    DrawText("GAME INFORMATION", overlayX + 10, yOffset, 20, YELLOW);
+    yOffset += lineHeight * 2;
+
+    DrawText("MAP INFO:", overlayX + 10, yOffset, 16, WHITE);
+    yOffset += lineHeight;
+    DrawText(TextFormat("Size: %dx%d", _mapInfo.width, _mapInfo.height), overlayX + 20, yOffset, 14, LIGHTGRAY);
+    yOffset += lineHeight;
+    DrawText(TextFormat("Tiles: %d", (int)_mapInfo.tiles.size()), overlayX + 20, yOffset, 14, LIGHTGRAY);
+    yOffset += lineHeight * 2;
+
+    DrawText("GAME INFO:", overlayX + 10, yOffset, 16, WHITE);
+    yOffset += lineHeight;
+    DrawText(TextFormat("Time Unit: %d", _gameInfo.timeUnit), overlayX + 20, yOffset, 14, LIGHTGRAY);
+    yOffset += lineHeight;
+    DrawText(TextFormat("Teams: %d", (int)_gameInfo.teams.size()), overlayX + 20, yOffset, 14, LIGHTGRAY);
+    yOffset += lineHeight;
+    DrawText(TextFormat("Players: %d", (int)_gameInfo.players.size()), overlayX + 20, yOffset, 14, LIGHTGRAY);
+    yOffset += lineHeight;
+    DrawText(TextFormat("Eggs: %d", (int)_gameInfo.eggs.size()), overlayX + 20, yOffset, 14, LIGHTGRAY);
+    yOffset += lineHeight;
+
+    if (!_gameInfo.winner.empty()) {
+        DrawText(TextFormat("Winner: %s", _gameInfo.winner.c_str()), overlayX + 20, yOffset, 14, GREEN);
+        yOffset += lineHeight;
+    }
+    yOffset += lineHeight;
+
+    DrawText("TEAMS:", overlayX + 10, yOffset, 16, WHITE);
+    yOffset += lineHeight;
+    for (const auto& team : _gameInfo.teams) {
+        DrawText(team.c_str(), overlayX + 20, yOffset, 14, LIGHTGRAY);
+        yOffset += lineHeight;
+    }
+    yOffset += lineHeight;
+
+    DrawText("PLAYERS:", overlayX + 10, yOffset, 16, WHITE);
+    yOffset += lineHeight;
+    int playerCount = 0;
+    for (const auto& [id, player] : _gameInfo.players) {
+        if (playerCount >= 10) {
+            DrawText("...", overlayX + 20, yOffset, 14, LIGHTGRAY);
+            break;
+        }
+        DrawText(TextFormat("%s (%s) Lv.%d", 
+                 player.id.c_str(), 
+                 player.team.c_str(), 
+                 player.level), 
+                 overlayX + 20, yOffset, 12, LIGHTGRAY);
+        yOffset += lineHeight;
+        playerCount++;
+    }
+
+    DrawText("Press 'I' to close", overlayX + 10, overlayY + overlayHeight - 30, 14, YELLOW);
+}
+
 void GUI::Core::send_command(const std::string& command)
 {
     if (!_network_manager->send_command(command))
@@ -219,13 +342,16 @@ void GUI::Core::run()
 {
     const int screenWidth = 1280;
     const int screenHeight = 720;
+    float zoom = 30.0f;
+    const float minZoom = 5.0f;
+    const float maxZoom = 100.0f;
 
     raylib::Window window(screenWidth, screenHeight, "Zappy GUI - 3D Grid");
 
     raylib::Camera3D camera(
-        { 10.0f, 20.0f, 30.0f }, // position
-        { 0.0f, 0.0f, 0.0f },    // target
-        { 0.0f, 1.0f, 0.0f },    // up vector
+        {10.0f, 20.0f, 30.0f},  // position
+        {0.0f, 0.0f, 0.0f},     // target
+        {0.0f, 1.0f, 0.0f},     // up vector
         45.0f, CAMERA_PERSPECTIVE
     );
 
@@ -244,8 +370,26 @@ void GUI::Core::run()
     send_command("tna");
     send_command("sgt");
 
-    while (!window.ShouldClose()) {
-        if (_connected && _network_manager->poll_for_data()) {
+    while (!window.ShouldClose())
+    {
+        float wheelMove = raylib::Mouse::GetWheelMove();
+        if (wheelMove != 0) {
+            zoom -= wheelMove * 2.0f;
+            if (zoom < minZoom) zoom = minZoom;
+            if (zoom > maxZoom) zoom = maxZoom;
+        }
+
+        camera.position = { 10.0f, zoom * 0.7f, zoom };
+        camera.target = { 0.0f, 0.0f, 0.0f };
+        camera.up = { 0.0f, 1.0f, 0.0f };
+        camera.fovy = 45.0f;
+        camera.projection = CAMERA_PERSPECTIVE;
+
+        if (raylib::Keyboard::IsKeyPressed(KEY_I))
+            _showInfoOverlay = !_showInfoOverlay;
+
+        if (_connected && _network_manager->poll_for_data())
+        {
             char buffer[4096];
             ssize_t bytes_read = _network_manager->receive_data(buffer, sizeof(buffer) - 1);
             if (bytes_read <= 0) {
@@ -273,21 +417,35 @@ void GUI::Core::run()
             }
         }
 
-        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+        if (raylib::Mouse::IsButtonDown(MOUSE_BUTTON_RIGHT))
             camera.Update(CAMERA_ORBITAL);
 
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
+        window.BeginDrawing();
+        window.ClearBackground(RAYWHITE);
 
         BeginMode3D(camera);
+
         if (gridReady)
-            DrawGrid3D(mapWidth, mapHeight, 1.0f);
+        {
+            GUI::Map map(mapWidth, mapHeight, 1.0f);
+            map.updateTileData(_mapInfo.tiles);
+            map.updatePlayerData(_gameInfo.players);
+            map.updateEggData(_gameInfo.eggs);
+            map.render();
+        }
+
         EndMode3D();
 
         DrawText("Hold right mouse button and drag to move camera", 10, 10, 20, DARKGRAY);
-        EndDrawing();
+        DrawText("Press 'I' to toggle information overlay", 10, 35, 20, DARKGRAY);
+
+        if (_showInfoOverlay)
+            drawInfoOverlay();
+
+        window.EndDrawing();
     }
 }
+
 
 int execute_zappygui(char **argv)
 {

@@ -9,43 +9,84 @@
 
 #include <string>
 #include <memory>
-#include <stdexcept>
+#include <exception>
+#include <vector>
+#include <map>
+#include <unordered_map>
 #include "../../include/raylib-cpp.hpp"
+#include "../map/Map.hpp"
 
 namespace GUI {
-
     class NetworkManager;
-    
     class CommunicationBuffer;
 
-    class Core {
-    public:
-        class CoreError : public std::runtime_error {
-        public:
-            CoreError(const std::string& message) : std::runtime_error(message) {}
-        };
-
-        Core(char **argv);
-        ~Core();
-        
-        void run();
-        void send_command(const std::string& command);
-
-    private:
-        bool connect_to_server();
-        void handle_server_message(const std::string &message);
-        
-        std::unique_ptr<NetworkManager> _network_manager;
-        std::unique_ptr<CommunicationBuffer> _comm_buffer;
-        
-        std::string _hostname;
-        int _port;
-        int _timeUnit;
-        bool _connected;
-        
-        int _server_fd;
+    struct TileInfo {
+        int x, y;
+        std::vector<int> resources;
     };
 
-} // namespace GUI
+    struct PlayerInfo {
+        std::string id;
+        std::string team;
+        int x, y;
+        int orientation;
+        int level;
+        std::vector<int> inventory;
+    };
+
+    struct EggInfo {
+        std::string id;
+        std::string player_id;
+        int x, y;
+    };
+
+    struct MapInfo {
+        int width = 0;
+        int height = 0;
+        std::map<std::pair<int, int>, TileInfo> tiles;
+    };
+
+    struct GameInfo {
+        int timeUnit = 0;
+        std::vector<std::string> teams;
+        std::unordered_map<std::string, PlayerInfo> players;
+        std::unordered_map<std::string, EggInfo> eggs;
+        std::string winner;
+    };
+
+    class Core {
+        public:
+            class CoreError : public std::exception {
+                private:
+                    std::string _message;
+                public:
+                    CoreError(const std::string& message) : _message(message) {}
+                    const char* what() const noexcept override { return _message.c_str(); }
+            };
+
+            Core(char **argv);
+            ~Core();
+
+            bool connect_to_server();
+            void handle_server_message(const std::string &message);
+            void send_command(const std::string& command);
+            void run();
+
+        private:
+            std::unique_ptr<NetworkManager> _network_manager;
+            std::unique_ptr<CommunicationBuffer> _comm_buffer;
+            std::string _hostname;
+            int _port;
+            int _timeUnit;
+            bool _connected;
+            int _server_fd;
+            
+            bool _showInfoOverlay;
+            MapInfo _mapInfo;
+            GameInfo _gameInfo;
+
+            void drawInfoOverlay();
+    };
+}
 
 int execute_zappygui(char **argv);
