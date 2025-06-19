@@ -82,13 +82,13 @@ void GUI::Core::handle_server_message(const std::string &message)
         int q5;
         int q6;
         iss >> x >> y >> q0 >> q1 >> q2 >> q3 >> q4 >> q5 >> q6;
-        
+
         TileInfo tile;
         tile.x = x;
         tile.y = y;
         tile.resources = {q0, q1, q2, q3, q4, q5, q6};
         _mapInfo.tiles[{x, y}] = tile;
-        
+
         std::cout << "Tile (" << x << "," << y << ") resources: "
                   << q0 << " " << q1 << " " << q2 << " " << q3 << " "
                   << q4 << " " << q5 << " " << q6 << std::endl;
@@ -105,7 +105,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         int orientation;
         int level;
         iss >> player_id_str >> x >> y >> orientation >> level >> team_name;
-        
+
         PlayerInfo player;
         player.id = player_id_str;
         player.x = x;
@@ -114,7 +114,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         player.level = level;
         player.team = team_name;
         _gameInfo.players[player_id_str] = player;
-        
+
         std::cout << "Player " << player_id_str << " connected at ("
                   << x << "," << y << ") team: " << team_name << std::endl;
     } else if (command == "ppo") {
@@ -123,24 +123,24 @@ void GUI::Core::handle_server_message(const std::string &message)
         int y;
         int orientation;
         iss >> player_id_str >> x >> y >> orientation;
-        
+
         if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
             _gameInfo.players[player_id_str].x = x;
             _gameInfo.players[player_id_str].y = y;
             _gameInfo.players[player_id_str].orientation = orientation;
         }
-        
+
         std::cout << "Player " << player_id_str << " position: ("
                   << x << "," << y << ") orientation: " << orientation << std::endl;
     } else if (command == "plv") {
         std::string player_id_str;
         int level;
         iss >> player_id_str >> level;
-        
+
         if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
             _gameInfo.players[player_id_str].level = level;
         }
-        
+
         std::cout << "Player " << player_id_str << " level: " << level << std::endl;
     } else if (command == "pin") {
         std::string player_id_str;
@@ -154,11 +154,11 @@ void GUI::Core::handle_server_message(const std::string &message)
         int q5;
         int q6;
         iss >> player_id_str >> x >> y >> q0 >> q1 >> q2 >> q3 >> q4 >> q5 >> q6;
-        
+
         if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
             _gameInfo.players[player_id_str].inventory = {q0, q1, q2, q3, q4, q5, q6};
         }
-        
+
         std::cout << "Player " << player_id_str << " inventory at ("
                   << x << "," << y << "): " << q0 << " " << q1 << " " << q2
                   << " " << q3 << " " << q4 << " " << q5 << " " << q6 << std::endl;
@@ -216,14 +216,14 @@ void GUI::Core::handle_server_message(const std::string &message)
         int x;
         int y;
         iss >> egg_id_str >> player_id_str >> x >> y;
-        
+
         EggInfo egg;
         egg.id = egg_id_str;
         egg.player_id = player_id_str;
         egg.x = x;
         egg.y = y;
         _gameInfo.eggs[egg_id_str] = egg;
-        
+
         std::cout << "New egg " << egg_id_str << " laid by " << player_id_str
                   << " at (" << x << "," << y << ")" << std::endl;
     } else if (command == "ebo") {
@@ -320,10 +320,10 @@ void GUI::Core::drawInfoOverlay()
             DrawText("...", overlayX + 20, yOffset, 14, LIGHTGRAY);
             break;
         }
-        DrawText(TextFormat("%s (%s) Lv.%d", 
-                 player.id.c_str(), 
-                 player.team.c_str(), 
-                 player.level), 
+        DrawText(TextFormat("%s (%s) Lv.%d",
+                 player.id.c_str(),
+                 player.team.c_str(),
+                 player.level),
                  overlayX + 20, yOffset, 12, LIGHTGRAY);
         yOffset += lineHeight;
         playerCount++;
@@ -348,18 +348,20 @@ void GUI::Core::run()
 
     raylib::Window window(screenWidth, screenHeight, "Zappy GUI - 3D Grid");
 
-    raylib::Camera3D camera(
-        {10.0f, 20.0f, 30.0f},  // position
-        {0.0f, 0.0f, 0.0f},     // target
-        {0.0f, 1.0f, 0.0f},     // up vector
-        45.0f, CAMERA_PERSPECTIVE
-    );
 
     SetTargetFPS(60);
 
     int mapWidth = 10;
     int mapHeight = 10;
     bool gridReady = false;
+    GUI::Map map(mapWidth, mapHeight, 1.0f);
+
+    raylib::Camera3D camera(
+        {10.0f, 20.0f, 30.0f},  // position
+        {(float)mapWidth / 2, (float)mapHeight / 2, 0.0f},     // target
+        {0.0f, 1.0f, 0.0f},     // up vector
+        45.0f, CAMERA_PERSPECTIVE
+    );
 
     std::cout << "Connecting to " << _hostname << ":" << _port << std::endl;
     if (!connect_to_server())
@@ -377,10 +379,10 @@ void GUI::Core::run()
             zoom -= wheelMove * 2.0f;
             if (zoom < minZoom) zoom = minZoom;
             if (zoom > maxZoom) zoom = maxZoom;
+            Vector3 dir = Vector3Normalize(Vector3Subtract(camera.position, camera.target));
+            camera.position = Vector3Add(camera.target, Vector3Scale(dir, zoom));
         }
 
-        camera.position = { 10.0f, zoom * 0.7f, zoom };
-        camera.target = { 0.0f, 0.0f, 0.0f };
         camera.up = { 0.0f, 1.0f, 0.0f };
         camera.fovy = 45.0f;
         camera.projection = CAMERA_PERSPECTIVE;
@@ -411,6 +413,9 @@ void GUI::Core::run()
                     iss >> mapWidth >> mapHeight;
                     std::cout << "Map size: " << mapWidth << "x" << mapHeight << std::endl;
                     gridReady = true;
+                    map = GUI::Map(mapWidth, mapHeight, 1.0f);
+
+                    camera.target = {(float)mapWidth / 2, 0.0f, (float)mapHeight / 2};
                 }
 
                 handle_server_message(message);
@@ -427,7 +432,6 @@ void GUI::Core::run()
 
         if (gridReady)
         {
-            GUI::Map map(mapWidth, mapHeight, 1.0f);
             map.updateTileData(_mapInfo.tiles);
             map.updatePlayerData(_gameInfo.players);
             map.updateEggData(_gameInfo.eggs);

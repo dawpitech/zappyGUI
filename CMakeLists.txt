@@ -11,7 +11,6 @@ set(SOURCE_FILES
     src/core/Core.cpp
     src/communication/CommunicationBuffer.cpp
     src/network/NetworkManager.cpp
-    src/raylib/Raylib.cpp
     src/map/Map.cpp
 )
 

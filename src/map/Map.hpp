@@ -27,7 +27,6 @@ namespace GUI {
             float _tileSize;
             std::size_t _width;
             std::size_t _height;
-            
             std::map<std::pair<int, int>, TileInfo> _tileData;
             std::unordered_map<std::string, PlayerInfo> _playerData;
             std::unordered_map<std::string, EggInfo> _eggData;
