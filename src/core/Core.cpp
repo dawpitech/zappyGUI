@@ -106,13 +106,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         int level;
         iss >> player_id_str >> x >> y >> orientation >> level >> team_name;
 
-        PlayerInfo player;
-        player.id = player_id_str;
-        player.x = x;
-        player.y = y;
-        player.orientation = orientation;
-        player.level = level;
-        player.team = team_name;
+        GUI::Player player(x, y, player_id_str, team_name, orientation, level);
         _gameInfo.players[player_id_str] = player;
 
         std::cout << "Player " << player_id_str << " connected at ("
@@ -125,9 +119,8 @@ void GUI::Core::handle_server_message(const std::string &message)
         iss >> player_id_str >> x >> y >> orientation;
 
         if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
-            _gameInfo.players[player_id_str].x = x;
-            _gameInfo.players[player_id_str].y = y;
-            _gameInfo.players[player_id_str].orientation = orientation;
+            _gameInfo.players[player_id_str].setPosition(x, y);
+            _gameInfo.players[player_id_str].setOrientation(orientation);
         }
 
         std::cout << "Player " << player_id_str << " position: ("
@@ -138,7 +131,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         iss >> player_id_str >> level;
 
         if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
-            _gameInfo.players[player_id_str].level = level;
+            _gameInfo.players[player_id_str].setLevel(level);
         }
 
         std::cout << "Player " << player_id_str << " level: " << level << std::endl;
@@ -156,7 +149,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         iss >> player_id_str >> x >> y >> q0 >> q1 >> q2 >> q3 >> q4 >> q5 >> q6;
 
         if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
-            _gameInfo.players[player_id_str].inventory = {q0, q1, q2, q3, q4, q5, q6};
+            _gameInfo.players[player_id_str].setInventory({q0, q1, q2, q3, q4, q5, q6});
         }
 
         std::cout << "Player " << player_id_str << " inventory at ("
@@ -321,9 +314,9 @@ void GUI::Core::drawInfoOverlay()
             break;
         }
         DrawText(TextFormat("%s (%s) Lv.%d",
-                 player.id.c_str(),
-                 player.team.c_str(),
-                 player.level),
+                 player.getName().c_str(),
+                 player.getTeam().c_str(),
+                 player.getLevel()),
                  overlayX + 20, yOffset, 12, LIGHTGRAY);
         yOffset += lineHeight;
         playerCount++;

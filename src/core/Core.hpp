@@ -12,6 +12,7 @@
 #include <exception>
 #include <vector>
 #include <map>
+#include "../player/Player.hpp"
 #include <unordered_map>
 #include "../../include/raylib-cpp.hpp"
 #include "../map/Map.hpp"
@@ -23,15 +24,6 @@ namespace GUI {
     struct TileInfo {
         int x, y;
         std::vector<int> resources;
-    };
-
-    struct PlayerInfo {
-        std::string id;
-        std::string team;
-        int x, y;
-        int orientation;
-        int level;
-        std::vector<int> inventory;
     };
 
     struct EggInfo {
@@ -49,7 +41,7 @@ namespace GUI {
     struct GameInfo {
         int timeUnit = 0;
         std::vector<std::string> teams;
-        std::unordered_map<std::string, PlayerInfo> players;
+        std::unordered_map<std::string, Player> players;
         std::unordered_map<std::string, EggInfo> eggs;
         std::string winner;
     };

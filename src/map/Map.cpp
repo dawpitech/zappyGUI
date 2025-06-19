@@ -84,23 +84,23 @@ void GUI::Map::drawPlayers()
     std::map<std::string, int> teamColorMap;
 
     for (const auto& [id, player] : _playerData) {
-        if (teamColorMap.find(player.team) == teamColorMap.end()) {
-            teamColorMap[player.team] = teamIndex % 8;
+        if (teamColorMap.find(player.getTeam()) == teamColorMap.end()) {
+            teamColorMap[player.getTeam()] = teamIndex % 8;
             teamIndex++;
         }
 
         Vector3 playerPos = {
-            static_cast<float>(player.x) * _tileSize,
+            static_cast<float>(player.getX()) * _tileSize,
             0.3f,
-            static_cast<float>(player.y) * _tileSize
+            static_cast<float>(player.getY()) * _tileSize
         };
 
-        Color playerColor = teamColors[teamColorMap[player.team]];
+        Color playerColor = teamColors[teamColorMap[player.getTeam()]];
 
         DrawCylinder(playerPos, 0.1f, 0.1f, 0.4f, 8, playerColor);
 
         Vector3 arrowEnd = playerPos;
-        switch (player.orientation) {
+        switch (player.getorientation()) {
             case 1: arrowEnd.z -= 0.3f; break; // North
             case 2: arrowEnd.x += 0.3f; break; // East
             case 3: arrowEnd.z += 0.3f; break; // South
@@ -110,7 +110,7 @@ void GUI::Map::drawPlayers()
 
         DrawLine3D(Vector3{playerPos.x, playerPos.y + 0.2f, playerPos.z}, arrowEnd, BLACK);
 
-        DrawSphere({playerPos.x, playerPos.y + 0.5f, playerPos.z}, 0.05f * player.level, GOLD);
+        DrawSphere({playerPos.x, playerPos.y + 0.5f, playerPos.z}, 0.05f * player.getLevel(), GOLD);
     }
 }
 
@@ -119,7 +119,7 @@ void GUI::Map::updateTileData(const std::map<std::pair<int, int>, TileInfo>& til
     _tileData = tiles;
 }
 
-void GUI::Map::updatePlayerData(const std::unordered_map<std::string, PlayerInfo>& players)
+void GUI::Map::updatePlayerData(const std::unordered_map<std::string, Player>& players)
 {
     _playerData = players;
 }

@@ -28,7 +28,7 @@ namespace GUI {
             std::size_t _width;
             std::size_t _height;
             std::map<std::pair<int, int>, TileInfo> _tileData;
-            std::unordered_map<std::string, PlayerInfo> _playerData;
+            std::unordered_map<std::string, Player> _playerData;
             std::unordered_map<std::string, EggInfo> _eggData;
 
         public:
@@ -46,7 +46,7 @@ namespace GUI {
 
             // Méthodes pour mettre à jour les données
             void updateTileData(const std::map<std::pair<int, int>, TileInfo>& tiles);
-            void updatePlayerData(const std::unordered_map<std::string, PlayerInfo>& players);
+            void updatePlayerData(const std::unordered_map<std::string, Player>& players);
             void updateEggData(const std::unordered_map<std::string, EggInfo>& eggs);
 
             void render();
