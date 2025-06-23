@@ -119,6 +119,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         iss >> player_id_str >> x >> y >> orientation;
 
         if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
+            _gameInfo.players[player_id_str].addMove(x - _gameInfo.players[player_id_str].getX(), y - _gameInfo.players[player_id_str].getY());
             _gameInfo.players[player_id_str].setPosition(x, y);
             _gameInfo.players[player_id_str].setOrientation(orientation);
         }
@@ -367,6 +368,12 @@ void GUI::Core::run()
 
     while (!window.ShouldClose())
     {
+        std::cout << ">>>>>>" << _gameInfo.players.size() << std::endl;
+        for (auto &player : this->_gameInfo.players)
+        {
+            std::cout << player.first << "<<<<<<<<<<<<<<<\n";
+            /* send_command("ppo #" + player.first); */
+        }
         float wheelMove = raylib::Mouse::GetWheelMove();
         if (wheelMove != 0) {
             zoom -= wheelMove * 2.0f;

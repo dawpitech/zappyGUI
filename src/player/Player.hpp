@@ -12,7 +12,7 @@
 namespace GUI {
     class Player {
     public:
-        Player() 
+        Player()
         : _x(0), _y(0), _orientation(0), _level(1) {}
 
         Player(std::size_t x, std::size_t y, std::string name, std::string team, int orientation, int level = 1)
@@ -30,6 +30,10 @@ namespace GUI {
             _x = x;
             _y = y;
         }
+        void addMove(int x, int y) {
+            _moveX = _moveX + x;
+            _moveY = _moveY + y;
+        }
         void setInventory(const std::vector<int> &inventory) {
             _inventory = inventory;
         }
@@ -44,5 +48,7 @@ namespace GUI {
         int _orientation;
         int _level;
         std::vector<int> _inventory;
+        int _moveX;
+        int _moveY;
     };
 } // namespace GUI
