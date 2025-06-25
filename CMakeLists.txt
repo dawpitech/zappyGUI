@@ -12,6 +12,7 @@ set(SOURCE_FILES
     src/communication/CommunicationBuffer.cpp
     src/network/NetworkManager.cpp
     src/map/Map.cpp
+    src/clock/Clock.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

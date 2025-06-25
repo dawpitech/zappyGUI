@@ -44,7 +44,6 @@ namespace GUI {
             void drawEggs();
             void drawPlayers();
 
-            // Méthodes pour mettre à jour les données
             void updateTileData(const std::map<std::pair<int, int>, TileInfo>& tiles);
             void updatePlayerData(const std::unordered_map<std::string, Player>& players);
             void updateEggData(const std::unordered_map<std::string, EggInfo>& eggs);

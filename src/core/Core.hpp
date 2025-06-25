@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include "../../include/raylib-cpp.hpp"
 #include "../map/Map.hpp"
+#include "../clock/Clock.hpp"
 
 namespace GUI {
     class NetworkManager;
@@ -76,6 +77,8 @@ namespace GUI {
             bool _showInfoOverlay;
             MapInfo _mapInfo;
             GameInfo _gameInfo;
+
+            std::unique_ptr<Clock> _clock;
 
             void drawInfoOverlay();
     };

@@ -9,6 +9,7 @@
 #include "../communication/CommunicationBuffer.hpp"
 #include "../network/NetworkManager.hpp"
 #include <iostream>
+#include <raylib.h>
 #include <sstream>
 #include "../map/Map.hpp"
 
@@ -16,6 +17,7 @@ GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _serve
 {
     _network_manager = std::make_unique<NetworkManager>();
     _comm_buffer = std::make_unique<CommunicationBuffer>();
+    _clock = std::make_unique<Clock>();
 
     for (int i = 1; i <= 3; ++i) {
         std::string arg = argv[i];
@@ -235,6 +237,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         iss >> time_unit;
         _timeUnit = time_unit;
         _gameInfo.timeUnit = time_unit;
+        _clock->setTimeUnit(time_unit);
         std::cout << "Time unit: " << time_unit << std::endl;
     } else if (command == "seg") {
         std::string team_name;
@@ -340,6 +343,7 @@ void GUI::Core::run()
     const float minZoom = 5.0f;
     const float maxZoom = 100.0f;
 
+
     raylib::Window window(screenWidth, screenHeight, "Zappy GUI - 3D Grid");
 
 
@@ -439,7 +443,7 @@ void GUI::Core::run()
         }
 
         EndMode3D();
-
+        DrawText(TextFormat("Timer: %.2f", _clock->getElapsedSeconds()), 35, 60, 20, RED);
         DrawText("Hold right mouse button and drag to move camera", 10, 10, 20, DARKGRAY);
         DrawText("Press 'I' to toggle information overlay", 10, 35, 20, DARKGRAY);
 
