@@ -13,9 +13,11 @@ GUI::Map::Map(std::size_t width, std::size_t height, float tileSize)
     : _width(width), _height(height), _tileSize(tileSize)
 {
     _grid.resize(width);
+    _eggModel = std::make_unique<raylib::Model>("assets/egg.glb");
+    _playerModel = std::make_unique<raylib::Model>("assets/player.glb");
     for (auto &column : _grid)
         column.resize(height);
-    
+
     try {
         _eggModel = std::make_unique<raylib::Model>("assets/egg.glb");
         _linemateModel = std::make_unique<raylib::Model>("assets/firstmineral.glb");
@@ -68,7 +70,7 @@ void GUI::Map::drawResources()
         int x = pos.first;
         int y = pos.second;
         Vector3 basePos = { static_cast<float>(x) * _tileSize, 0.1f, static_cast<float>(y) * _tileSize };
-        
+
         for (size_t i = 0; i < tile.resources.size() && i < 7; ++i) {
             int resourceCount = tile.resources[i];
             if (resourceCount > 0) {
@@ -138,7 +140,7 @@ void GUI::Map::drawPlayers()
 
         Color playerColor = teamColors[teamColorMap[player.getTeam()]];
 
-        DrawCylinder(playerPos, 0.1f, 0.1f, 0.4f, 8, playerColor);
+        _playerModel->Draw(playerPos, {0, 1, 0}, 0.0F, {1.0F, 1.0F, 1.0F}, WHITE);
 
         Vector3 arrowEnd = playerPos;
         switch (player.getorientation()) {
