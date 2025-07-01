@@ -7,47 +7,49 @@
 
 #pragma once
 
-#include <array>
-#include <cstddef>
 #include <vector>
-#include <map>
+#include <memory>
 #include <unordered_map>
-#include "../resource/IResource.hpp"
-#include "../../include/raylib-cpp.hpp"
 #include "../core/Core.hpp"
 
 namespace GUI {
     struct TileInfo;
     struct PlayerInfo;
     struct EggInfo;
-
+    
     class Map {
+        
         private:
-            std::vector<std::vector<std::vector<IResource>>> _grid;
-            float _tileSize;
             std::size_t _width;
             std::size_t _height;
-            std::map<std::pair<int, int>, TileInfo> _tileData;
-            std::unordered_map<std::string, Player> _playerData;
-            std::unordered_map<std::string, EggInfo> _eggData;
-
-        public:
+            float _tileSize;
+            std::vector<std::vector<int>> _grid;
+            
             std::unique_ptr<raylib::Model> _eggModel;
-
-            Map(std::size_t width, std::size_t height, float tileSize = 1.0f);
-
-            std::size_t get_width() const { return _width; }
-            std::size_t get_height() const { return _height; }
+            std::unique_ptr<raylib::Model> _foodModel;
+            std::unique_ptr<raylib::Model> _linemateModel;
+            std::unique_ptr<raylib::Model> _deraumereModel;
+            std::unique_ptr<raylib::Model> _siburModel;
+            std::unique_ptr<raylib::Model> _mendianeModel;
+            std::unique_ptr<raylib::Model> _phirasModel;
+            std::unique_ptr<raylib::Model> _thystameModel;
+            
+            std::map<std::pair<int, int>, GUI::TileInfo> _tileData;
+            std::unordered_map<std::string, GUI::Player> _playerData;
+            std::unordered_map<std::string, GUI::EggInfo> _eggData;
 
             void drawGround();
             void drawResources();
             void drawEggs();
             void drawPlayers();
 
-            void updateTileData(const std::map<std::pair<int, int>, TileInfo>& tiles);
-            void updatePlayerData(const std::unordered_map<std::string, Player>& players);
-            void updateEggData(const std::unordered_map<std::string, EggInfo>& eggs);
+        public:
+            Map(std::size_t width, std::size_t height, float tileSize);
+            ~Map() = default;
 
+            void updateTileData(const std::map<std::pair<int, int>, GUI::TileInfo>& tiles);
+            void updatePlayerData(const std::unordered_map<std::string, GUI::Player>& players);
+            void updateEggData(const std::unordered_map<std::string, GUI::EggInfo>& eggs);
             void render();
     };
 }

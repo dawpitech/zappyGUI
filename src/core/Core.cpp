@@ -343,16 +343,15 @@ void GUI::Core::run()
     const float minZoom = 5.0f;
     const float maxZoom = 100.0f;
 
-
     raylib::Window window(screenWidth, screenHeight, "Zappy GUI - 3D Grid");
-
 
     SetTargetFPS(60);
 
     int mapWidth = 10;
     int mapHeight = 10;
     bool gridReady = false;
-    GUI::Map map(mapWidth, mapHeight, 1.0f);
+
+    std::unique_ptr<GUI::Map> map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0f);
 
     raylib::Camera3D camera(
         {10.0f, 20.0f, 30.0f},  // position
@@ -417,7 +416,8 @@ void GUI::Core::run()
                     iss >> mapWidth >> mapHeight;
                     std::cout << "Map size: " << mapWidth << "x" << mapHeight << std::endl;
                     gridReady = true;
-                    map = GUI::Map(mapWidth, mapHeight, 1.0f);
+
+                    map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0f);
 
                     camera.target = {(float)mapWidth / 2, 0.0f, (float)mapHeight / 2};
                 }
@@ -436,10 +436,10 @@ void GUI::Core::run()
 
         if (gridReady)
         {
-            map.updateTileData(_mapInfo.tiles);
-            map.updatePlayerData(_gameInfo.players);
-            map.updateEggData(_gameInfo.eggs);
-            map.render();
+            map->updateTileData(_mapInfo.tiles);
+            map->updatePlayerData(_gameInfo.players);
+            map->updateEggData(_gameInfo.eggs);
+            map->render();
         }
 
         EndMode3D();

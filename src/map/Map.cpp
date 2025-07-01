@@ -5,17 +5,30 @@
 ** map.cpp
 */
 
+#include <raylib.h>
 #include "Map.hpp"
 #include <iostream>
-#include <raylib.h>
 
 GUI::Map::Map(std::size_t width, std::size_t height, float tileSize)
     : _width(width), _height(height), _tileSize(tileSize)
 {
     _grid.resize(width);
-    _eggModel = std::make_unique<raylib::Model>("assets/egg.glb");
     for (auto &column : _grid)
         column.resize(height);
+    
+    try {
+        _eggModel = std::make_unique<raylib::Model>("assets/egg.glb");
+        _linemateModel = std::make_unique<raylib::Model>("assets/firstmineral.glb");
+        _deraumereModel = std::make_unique<raylib::Model>("assets/secondmineral.glb");
+        _siburModel = std::make_unique<raylib::Model>("assets/thirdmineral.glb");
+        _mendianeModel = std::make_unique<raylib::Model>("assets/fourthmineral.glb");
+        _phirasModel = std::make_unique<raylib::Model>("assets/fifthmineral.glb");
+        _thystameModel = std::make_unique<raylib::Model>("assets/sixthmineral.glb");
+        _foodModel = std::make_unique<raylib::Model>("assets/food.glb");
+
+    } catch (const std::exception& e) {
+        std::cerr << "Erreur lors du chargement des modèles 3D: " << e.what() << std::endl;
+    }
 }
 
 void GUI::Map::drawGround()
@@ -31,30 +44,55 @@ void GUI::Map::drawGround()
 
 void GUI::Map::drawResources()
 {
+    raylib::Model* resourceModels[] = {
+        _foodModel.get(),
+        _linemateModel.get(),
+        _deraumereModel.get(),
+        _siburModel.get(),
+        _mendianeModel.get(),
+        _phirasModel.get(),
+        _thystameModel.get()
+    };
+
+    const Color resourceColors[] = {
+        YELLOW,
+        BLUE,
+        GREEN,
+        RED,
+        PURPLE,
+        ORANGE,
+        PINK
+    };
+
     for (const auto& [pos, tile] : _tileData) {
         int x = pos.first;
         int y = pos.second;
         Vector3 basePos = { static_cast<float>(x) * _tileSize, 0.1f, static_cast<float>(y) * _tileSize };
-        const Color resourceColors[] = {
-            YELLOW,    // food
-            BLUE,      // linemate
-            GREEN,     // deraumere
-            RED,       // sibur
-            PURPLE,    // mendiane
-            ORANGE,    // phiras
-            PINK       // thystame
-        };
+        
         for (size_t i = 0; i < tile.resources.size() && i < 7; ++i) {
             int resourceCount = tile.resources[i];
             if (resourceCount > 0) {
-                Vector3 resourcePos = {
-                    basePos.x + (i % 3 - 1) * 0.2f,
-                    basePos.y + 0.1f,
-                    basePos.z + (i / 3 - 1) * 0.2f
-                };
-                float size = 0.05f + (resourceCount * 0.02f);
-                if (size > 0.2f) size = 0.2f;
-                DrawSphere(resourcePos, size, resourceColors[i]);
+                for (int count = 0; count < resourceCount && count < 5; ++count) {
+                    Vector3 resourcePos = {
+                        basePos.x + ((count % 3) - 1) * 0.15f + ((i % 2) * 0.1f),
+                        basePos.y + 0.05f,
+                        basePos.z + ((count / 3) - 1) * 0.15f + ((i / 2) * 0.1f)
+                    };
+
+                    if (resourceModels[i] != nullptr) {
+                        try {
+                            resourceModels[i]->Draw(resourcePos, 0.1f, WHITE);
+                        } catch (const std::exception& e) {
+                            float size = 0.05f + (resourceCount * 0.02f);
+                            if (size > 0.2f) size = 0.2f;
+                            DrawSphere(resourcePos, size, resourceColors[i]);
+                        }
+                    } else {
+                        float size = 0.05f + (resourceCount * 0.02f);
+                        if (size > 0.2f) size = 0.2f;
+                        DrawSphere(resourcePos, size, resourceColors[i]);
+                    }
+                }
             }
         }
     }
@@ -69,8 +107,11 @@ void GUI::Map::drawEggs()
             static_cast<float>(egg.y) * _tileSize
         };
 
-        _eggModel->Draw(eggPos, 0.005f, WHITE);
-
+        if (_eggModel) {
+            _eggModel->Draw(eggPos, 0.005f, WHITE);
+        } else {
+            DrawSphere(eggPos, 0.1f, BEIGE);
+        }
     }
 }
 

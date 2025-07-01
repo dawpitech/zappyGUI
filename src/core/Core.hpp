@@ -15,7 +15,6 @@
 #include "../player/Player.hpp"
 #include <unordered_map>
 #include "../../include/raylib-cpp.hpp"
-#include "../map/Map.hpp"
 #include "../clock/Clock.hpp"
 
 namespace GUI {
