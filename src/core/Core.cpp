@@ -204,8 +204,12 @@ void GUI::Core::handle_server_message(const std::string &message)
     } else if (command == "pdi") {
         std::string player_id_str;
         iss >> player_id_str;
+        DeathMessage msg;
+        msg.text = TextFormat("Player %s died", player_id_str.c_str());
+        msg.timestamp = GetTime();
+        _deathMessages.push_back(msg);
+
         _gameInfo.players.erase(player_id_str);
-        std::cout << "Player " << player_id_str << " died" << std::endl;
     } else if (command == "enw") {
         std::string egg_id_str;
         std::string player_id_str;
@@ -335,6 +339,22 @@ void GUI::Core::send_command(const std::string& command)
         std::cerr << "Failed to send command: " << command << std::endl;
 }
 
+void GUI::Core::drawDeathMessages()
+{
+    float currentTime = GetTime();
+    int y = 500;
+
+    for (auto it = _deathMessages.begin(); it != _deathMessages.end(); ) {
+        if (currentTime - it->timestamp > 5.0f) {
+            it = _deathMessages.erase(it);
+        } else {
+            DrawText(it->text.c_str(), 45, y, 20, RED);
+            y += 25;
+            ++it;
+        }
+    }
+}
+
 void GUI::Core::run()
 {
     const int screenWidth = 1280;
@@ -449,6 +469,8 @@ void GUI::Core::run()
 
         if (_showInfoOverlay)
             drawInfoOverlay();
+
+        drawDeathMessages();
 
         window.EndDrawing();
     }

@@ -26,6 +26,11 @@ namespace GUI {
         std::vector<int> resources;
     };
 
+    struct DeathMessage {
+        std::string text;
+        double timestamp;
+    };
+
     struct EggInfo {
         std::string id;
         std::string player_id;
@@ -64,6 +69,8 @@ namespace GUI {
             void send_command(const std::string& command);
             void run();
 
+            void drawDeathMessages();
+
         private:
             std::unique_ptr<NetworkManager> _network_manager;
             std::unique_ptr<CommunicationBuffer> _comm_buffer;
@@ -78,6 +85,8 @@ namespace GUI {
             GameInfo _gameInfo;
 
             std::unique_ptr<Clock> _clock;
+
+            std::vector<DeathMessage> _deathMessages;
 
             void drawInfoOverlay();
     };
