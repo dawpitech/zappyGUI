@@ -151,6 +151,55 @@ void GUI::Map::drawPlayers()
     }
 }
 
+void GUI::Map::drawBroadcastMessages(const Camera3D& camera)
+{
+    for (auto& [id, player] : _playerData) {
+        const_cast<Player&>(player).clearBroadcastIfExpired();
+        
+        if (player.shouldShowBroadcast()) {
+            Vector3 playerPos = {
+                static_cast<float>(player.getX()) * _tileSize,
+                0.8f,
+                static_cast<float>(player.getY()) * _tileSize
+            };
+
+            Vector2 screenPos = GetWorldToScreen(playerPos, camera);
+            
+            const std::string &message = player.getBroadcastMessage();
+            
+            int textWidth = MeasureText(message.c_str(), 16);
+            int bubbleWidth = textWidth + 20;
+            int bubbleHeight = 30;
+            
+            Rectangle bubble = {
+                screenPos.x - bubbleWidth / 2.0f,
+                screenPos.y - 40,
+                static_cast<float>(bubbleWidth),
+                static_cast<float>(bubbleHeight)
+            };
+            
+            DrawRectangleRounded(bubble, 0.3f, 8, Fade(WHITE, 0.9f));
+            DrawRectangleRoundedLines(bubble, 0.3f, 8, BLACK);
+            
+            Vector2 trianglePoints[3] = {
+                {screenPos.x - 8, bubble.y + bubble.height},
+                {screenPos.x + 8, bubble.y + bubble.height},
+                {screenPos.x, bubble.y + bubble.height + 10}
+            };
+            
+            DrawTriangle(trianglePoints[0], trianglePoints[1], trianglePoints[2], Fade(WHITE, 0.9f));
+            DrawTriangleLines(trianglePoints[0], trianglePoints[1], trianglePoints[2], BLACK);
+            
+            Vector2 textPos = {
+                bubble.x + (bubble.width - textWidth) / 2.0f,
+                bubble.y + (bubble.height - 16) / 2.0f
+            };
+            
+            DrawText(message.c_str(), static_cast<int>(textPos.x), static_cast<int>(textPos.y), 16, BLACK);
+        }
+    }
+}
+
 void GUI::Map::updateTileData(const std::map<std::pair<int, int>, TileInfo>& tiles)
 {
     _tileData = tiles;
@@ -172,4 +221,9 @@ void GUI::Map::render()
     drawResources();
     drawEggs();
     drawPlayers();
+}
+
+void GUI::Map::renderUI(const Camera3D& camera)
+{
+    drawBroadcastMessages(camera);
 }

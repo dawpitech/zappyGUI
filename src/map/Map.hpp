@@ -54,5 +54,7 @@ namespace GUI {
             void updatePlayerData(const std::unordered_map<std::string, GUI::Player>& players);
             void updateEggData(const std::unordered_map<std::string, GUI::EggInfo>& eggs);
             void render();
+            void renderUI(const Camera3D &camera);
+            void drawBroadcastMessages(const Camera3D& camera);
     };
 } // namespace GUI

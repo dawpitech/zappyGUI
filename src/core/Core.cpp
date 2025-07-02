@@ -163,11 +163,16 @@ void GUI::Core::handle_server_message(const std::string &message)
         iss >> player_id_str;
         std::cout << "Player " << player_id_str << " expelled" << std::endl;
     } else if (command == "pbc") {
-        std::string player_id_str;
-        std::string broadcast_message;
-        iss >> player_id_str;
-        std::getline(iss, broadcast_message);
-        std::cout << "Player " << player_id_str << " broadcast:" << broadcast_message << std::endl;
+        std::string idStr;
+        std::string msg;
+
+        iss >> idStr;
+        std::getline(iss, msg);
+        if (!msg.empty() && msg[0] == ' ') msg.erase(0, 1);
+
+        auto it = _gameInfo.players.find(idStr);
+        if (it != _gameInfo.players.end())
+            it->second.setBroadcastMessage(msg);
     } else if (command == "pic") {
         int x;
         int y;
@@ -395,6 +400,7 @@ void GUI::Core::run()
         {
             send_command("ppo " + player.first);
         }
+        
         float wheelMove = raylib::Mouse::GetWheelMove();
         if (wheelMove != 0) {
             zoom -= wheelMove * 2.0f;
@@ -461,6 +467,10 @@ void GUI::Core::run()
         }
 
         EndMode3D();
+
+        if (gridReady)
+            map->renderUI(camera);
+
         DrawText(TextFormat("Timer: %.2f", _clock->getElapsedSeconds()), 35, 60, 20, RED);
         DrawText("Hold right mouse button and drag to move camera", 10, 10, 20, DARKGRAY);
         DrawText("Press 'I' to toggle information overlay", 10, 35, 20, DARKGRAY);
