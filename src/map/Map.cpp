@@ -140,20 +140,14 @@ void GUI::Map::drawPlayers()
 
         Color playerColor = teamColors[teamColorMap[player.getTeam()]];
 
-        _playerModel->Draw(playerPos, {0, 1, 0}, 0.0F, {1.0F, 1.0F, 1.0F}, WHITE);
-
-        Vector3 arrowEnd = playerPos;
-        switch (player.getorientation()) {
-            case 1: arrowEnd.z -= 0.3f; break; // North
-            case 2: arrowEnd.x += 0.3f; break; // East
-            case 3: arrowEnd.z += 0.3f; break; // South
-            case 4: arrowEnd.x -= 0.3f; break; // West
+        float orientationDegree;
+        switch (player.getOrientation()) {
+            case 1: orientationDegree = 180.0F; break; // North
+            case 2: orientationDegree = 90.0F; break; // East
+            case 3: orientationDegree = 0.0F; break; // South
+            case 4: orientationDegree = 270.0F; break; // West
         }
-        arrowEnd.y += 0.2f;
-
-        DrawLine3D(Vector3{playerPos.x, playerPos.y + 0.2f, playerPos.z}, arrowEnd, BLACK);
-
-        DrawSphere({playerPos.x, playerPos.y + 0.5f, playerPos.z}, 0.05f * player.getLevel(), GOLD);
+        _playerModel->Draw(playerPos, {0, 1, 0}, orientationDegree, {1.0F, 1.0F, 1.0F}, WHITE);
     }
 }
 

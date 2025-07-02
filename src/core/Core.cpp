@@ -391,11 +391,9 @@ void GUI::Core::run()
 
     while (!window.ShouldClose())
     {
-        std::cout << ">>>>>>" << _gameInfo.players.size() << std::endl;
         for (auto &player : this->_gameInfo.players)
         {
-            std::cout << player.first << "<<<<<<<<<<<<<<<\n";
-            /* send_command("ppo #" + player.first); */
+            send_command("ppo " + player.first);
         }
         float wheelMove = raylib::Mouse::GetWheelMove();
         if (wheelMove != 0) {

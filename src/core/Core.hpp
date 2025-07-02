@@ -10,6 +10,7 @@
 #include <string>
 #include <memory>
 #include <exception>
+#include <utility>
 #include <vector>
 #include <map>
 #include "../player/Player.hpp"
@@ -57,8 +58,8 @@ namespace GUI {
                 private:
                     std::string _message;
                 public:
-                    CoreError(const std::string& message) : _message(message) {}
-                    const char* what() const noexcept override { return _message.c_str(); }
+                    CoreError(std::string  message) : _message(std::move(message)) {}
+                    [[nodiscard]] const char* what() const noexcept override { return _message.c_str(); }
             };
 
             Core(char **argv);
@@ -79,7 +80,7 @@ namespace GUI {
             int _timeUnit;
             bool _connected;
             int _server_fd;
-            
+
             bool _showInfoOverlay;
             MapInfo _mapInfo;
             GameInfo _gameInfo;
@@ -90,6 +91,6 @@ namespace GUI {
 
             void drawInfoOverlay();
     };
-}
+} // namespace GUI
 
 int execute_zappygui(char **argv);

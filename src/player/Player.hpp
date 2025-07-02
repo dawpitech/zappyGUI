@@ -22,7 +22,7 @@ namespace GUI {
         [[nodiscard]] std::size_t getY() const { return _y; }
         [[nodiscard]] const std::string &getName() const { return _name; }
         [[nodiscard]] const std::string &getTeam() const { return _team; }
-        [[nodiscard]] int getorientation() const { return _orientation; }
+        [[nodiscard]] int getOrientation() const { return _orientation; }
         [[nodiscard]] int getLevel() const { return _level; }
         void setLevel(int lvl) { _level = lvl; }
 
