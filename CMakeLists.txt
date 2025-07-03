@@ -13,6 +13,7 @@ set(SOURCE_FILES
     src/network/NetworkManager.cpp
     src/map/Map.cpp
     src/clock/Clock.cpp
+    src/audio/Audio.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

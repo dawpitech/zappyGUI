@@ -169,7 +169,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         iss >> idStr;
         std::getline(iss, msg);
         if (!msg.empty() && msg[0] == ' ') msg.erase(0, 1);
-
+        _audio.play("broadcast");
         auto it = _gameInfo.players.find(idStr);
         if (it != _gameInfo.players.end())
             it->second.setBroadcastMessage(msg);
@@ -207,13 +207,13 @@ void GUI::Core::handle_server_message(const std::string &message)
         iss >> player_id_str >> resource;
         std::cout << "Player " << player_id_str << " collected resource " << resource << std::endl;
     } else if (command == "pdi") {
+        _audio.play("deathPlayer");
         std::string player_id_str;
         iss >> player_id_str;
         DeathMessage msg;
         msg.text = TextFormat("Player %s died", player_id_str.c_str());
         msg.timestamp = GetTime();
         _deathMessages.push_back(msg);
-
         _gameInfo.players.erase(player_id_str);
     } else if (command == "enw") {
         std::string egg_id_str;

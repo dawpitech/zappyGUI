@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include "../../include/raylib-cpp.hpp"
 #include "../clock/Clock.hpp"
+#include "../audio/Audio.hpp"
 
 namespace GUI {
     class NetworkManager;
@@ -72,6 +73,10 @@ namespace GUI {
 
             void drawDeathMessages();
 
+            GUI::AudioManager &getAudioManager() { 
+                return _audio;
+            }
+
         private:
             std::unique_ptr<NetworkManager> _network_manager;
             std::unique_ptr<CommunicationBuffer> _comm_buffer;
@@ -90,6 +95,8 @@ namespace GUI {
             std::vector<DeathMessage> _deathMessages;
 
             void drawInfoOverlay();
+
+            GUI::AudioManager _audio;
     };
 } // namespace GUI
 
