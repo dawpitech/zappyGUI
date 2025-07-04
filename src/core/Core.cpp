@@ -476,6 +476,7 @@ void GUI::Core::run()
     const float maxZoom = 100.0f;
 
     raylib::Window window(screenWidth, screenHeight, "Zappy GUI - 3D Grid");
+    Model backgroundModel = LoadModel("assets/background.glb");
 
     SetTargetFPS(60);
 
@@ -565,6 +566,7 @@ void GUI::Core::run()
 
         BeginMode3D(camera);
 
+        DrawModel(backgroundModel, { 0.0f, -10.0f, 0.0f }, 0.5f, WHITE);
         if (gridReady)
         {
             map->updateTileData(_mapInfo.tiles);
