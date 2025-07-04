@@ -38,7 +38,8 @@
  * @throws May throw exceptions if audio device initialization fails
  * @throws May throw exceptions if sound file loading fails
  */
-GUI::AudioManager::AudioManager() {
+GUI::AudioManager::AudioManager()
+{
     InitAudioDevice();
     _sounds.emplace("newPlayer", raylib::Sound("assets/newPlayer.wav"));
     _sounds.emplace("playerExpulsion", raylib::Sound("assets/deathPlayer.wav"));
@@ -48,6 +49,11 @@ GUI::AudioManager::AudioManager() {
     _sounds.emplace("deathPlayer", raylib::Sound("assets/deathPlayer.wav"));
     _sounds.emplace("endGame", raylib::Sound("assets/endGame.wav"));
 }
+
+GUI::AudioManager::~AudioManager()
+{
+    CloseAudioDevice();
+};
 
 /**
  * @brief Plays a sound by name
@@ -83,7 +89,6 @@ GUI::AudioManager::AudioManager() {
  */
 void GUI::AudioManager::play(const std::string &name) {
     auto it = _sounds.find(name);
-    if (it != _sounds.end()) {
+    if (it != _sounds.end())
         it->second.Play();
-    }
 }

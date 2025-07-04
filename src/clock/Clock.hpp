@@ -13,10 +13,13 @@ namespace GUI {
     class Clock {
     public:
         Clock();
+
         void setTimeUnit(int timeUnit);
+
         [[nodiscard]] double getElapsedSeconds() const;
+
     private:
         int _timeUnit;
         std::chrono::steady_clock::time_point _lastTick;
     };
-}
+} // namespace GUI

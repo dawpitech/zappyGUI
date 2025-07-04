@@ -8,13 +8,12 @@ namespace GUI {
     class AudioManager {
     public:
         AudioManager();
-        ~AudioManager() {
-            CloseAudioDevice();
-        };
+        ~AudioManager();
 
         void play(const std::string &name);
 
     private:
         std::map<std::string, raylib::Sound> _sounds;
     };
+    
 } // namespace GUI

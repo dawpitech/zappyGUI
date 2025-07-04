@@ -6,6 +6,7 @@
 */
 
 #include <string>
+#include "../macros.hpp"
 
 namespace GUI {
 

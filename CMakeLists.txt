@@ -14,6 +14,7 @@ set(SOURCE_FILES
     src/map/Map.cpp
     src/clock/Clock.cpp
     src/audio/Audio.cpp
+    src/player/Player.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

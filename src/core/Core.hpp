@@ -7,17 +7,18 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
+#include "../player/Player.hpp"
+#include "../../include/raylib-cpp.hpp"
+#include "../audio/Audio.hpp"
+#include "../clock/Clock.hpp"
+#include "../macros.hpp"
 #include <exception>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <map>
-#include "../player/Player.hpp"
-#include <unordered_map>
-#include "../../include/raylib-cpp.hpp"
-#include "../clock/Clock.hpp"
-#include "../audio/Audio.hpp"
 
 namespace GUI {
     class NetworkManager;

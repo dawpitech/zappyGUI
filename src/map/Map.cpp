@@ -70,9 +70,9 @@ void GUI::Map::drawGround()
 {
     for (std::size_t x = 0; x < _width; ++x) {
         for (std::size_t y = 0; y < _height; ++y) {
-            Vector3 position = { static_cast<float>(x) * _tileSize, 0.0f, static_cast<float>(y) * _tileSize };
-            DrawCube(position, _tileSize, 0.1f, _tileSize, (x + y) % 2 == 0 ? GREEN : DARKGREEN);
-            DrawCubeWires(position, _tileSize, 0.1f, _tileSize, WHITE);
+            Vector3 position = { static_cast<float>(x) * _tileSize, 0.0F, static_cast<float>(y) * _tileSize };
+            DrawCube(position, _tileSize, 0.1F, _tileSize, (x + y) % 2 == 0 ? GREEN : DARKGREEN);
+            DrawCubeWires(position, _tileSize, 0.1F, _tileSize, WHITE);
         }
     }
 }
@@ -121,7 +121,7 @@ void GUI::Map::drawResources()
     for (const auto& [pos, tile] : _tileData) {
         int x = pos.first;
         int y = pos.second;
-        Vector3 basePos = { static_cast<float>(x) * _tileSize, 0.1f, static_cast<float>(y) * _tileSize };
+        Vector3 basePos = { static_cast<float>(x) * _tileSize, 0.1F, static_cast<float>(y) * _tileSize };
 
         for (size_t i = 0; i < tile.resources.size() && i < 7; ++i) {
             int resourceCount = tile.resources[i];
@@ -130,22 +130,24 @@ void GUI::Map::drawResources()
                 
                 for (int count = 0; count < visualCount; ++count) {
                     Vector3 resourcePos = {
-                        basePos.x + ((count % 3) - 1) * 0.15f + ((i % 2) * 0.1f),
-                        basePos.y + 0.05f,
-                        basePos.z + ((count / 3) - 1) * 0.15f + ((i / 2) * 0.1f)
+                        basePos.x + ((count % 3) - 1) * 0.15F + ((i % 2) * 0.1F),
+                        basePos.y + 0.05F,
+                        basePos.z + ((count / 3) - 1) * 0.15F + ((i / 2) * 0.1F)
                     };
 
                     if (resourceModels[i] != nullptr) {
                         try {
-                            resourceModels[i]->Draw(resourcePos, 0.1f, WHITE);
-                        } catch (const std::exception& e) {
-                            float size = 0.05f + (resourceCount * 0.02f);
-                            if (size > 0.2f) size = 0.2f;
+                            resourceModels[i]->Draw(resourcePos, 0.1F, WHITE);
+                        } catch (const std::exception &e) {
+                            float size = 0.05F + (resourceCount * 0.02F);
+                            if (size > 0.2F)
+                                size = 0.2F;
                             DrawSphere(resourcePos, size, resourceColors[i]);
                         }
                     } else {
-                        float size = 0.05f + (resourceCount * 0.02f);
-                        if (size > 0.2f) size = 0.2f;
+                        float size = 0.05F + (resourceCount * 0.02F);
+                        if (size > 0.2F)
+                            size = 0.2F;
                         DrawSphere(resourcePos, size, resourceColors[i]);
                     }
                 }
@@ -176,16 +178,16 @@ void GUI::Map::drawResourceMultipliers(const Camera3D &camera)
             if (resourceCount > 1) {
                 Vector3 textPos = {
                     basePos.x + ((i % 2) * 0.1f),
-                    basePos.y + 0.3f,
-                    basePos.z + ((i / 2) * 0.1f)
+                    basePos.y + 0.3F,
+                    basePos.z + ((i / 2) * 0.1F)
                 };
 
                 std::string multiplierText = "x" + std::to_string(resourceCount);
                 
                 Vector2 screenPos = GetWorldToScreen(textPos, camera);
                 
-                int fontSize = 18;
-                Vector2 textSize = MeasureTextEx(GetFontDefault(), multiplierText.c_str(), fontSize, 1.0f);
+                float fontSize = 18;
+                Vector2 textSize = MeasureTextEx(GetFontDefault(), multiplierText.c_str(), fontSize, 1.0F);
                 
                 DrawText(multiplierText.c_str(), screenPos.x - textSize.x/2 - 1, screenPos.y - textSize.y/2 - 1, fontSize, BLACK);
                 DrawText(multiplierText.c_str(), screenPos.x - textSize.x/2 + 1, screenPos.y - textSize.y/2 - 1, fontSize, BLACK);
@@ -214,15 +216,14 @@ void GUI::Map::drawEggs()
     for (const auto& [id, egg] : _eggData) {
         Vector3 eggPos = {
             static_cast<float>(egg.x) * _tileSize,
-            0.0f,
+            0.0F,
             static_cast<float>(egg.y) * _tileSize
         };
 
-        if (_eggModel) {
-            _eggModel->Draw(eggPos, 0.005f, WHITE);
-        } else {
-            DrawSphere(eggPos, 0.1f, BEIGE);
-        }
+        if (_eggModel)
+            _eggModel->Draw(eggPos, 0.005F, WHITE);
+        else
+            DrawSphere(eggPos, 0.1F, BEIGE);
     }
 }
 
@@ -259,7 +260,7 @@ void GUI::Map::drawPlayers()
 
         Vector3 playerPos = {
             static_cast<float>(player.getX()) * _tileSize,
-            0.3f,
+            0.3F,
             static_cast<float>(player.getY()) * _tileSize
         };
 
@@ -300,7 +301,7 @@ void GUI::Map::drawBroadcastMessages(const Camera3D &camera)
         if (player.shouldShowBroadcast()) {
             Vector3 playerPos = {
                 static_cast<float>(player.getX()) * _tileSize,
-                0.8f,
+                0.8F,
                 static_cast<float>(player.getY()) * _tileSize
             };
 
@@ -309,18 +310,18 @@ void GUI::Map::drawBroadcastMessages(const Camera3D &camera)
             const std::string &message = player.getBroadcastMessage();
 
             int textWidth = MeasureText(message.c_str(), 16);
-            int bubbleWidth = textWidth + 20;
+            float bubbleWidth = textWidth + 20;
             int bubbleHeight = 30;
 
             Rectangle bubble = {
-                screenPos.x - bubbleWidth / 2.0f,
+                screenPos.x - bubbleWidth / 2.0F,
                 screenPos.y - 40,
                 static_cast<float>(bubbleWidth),
                 static_cast<float>(bubbleHeight)
             };
 
-            DrawRectangleRounded(bubble, 0.3f, 8, Fade(WHITE, 0.9f));
-            DrawRectangleRoundedLines(bubble, 0.3f, 8, BLACK);
+            DrawRectangleRounded(bubble, 0.3F, 8, Fade(WHITE, 0.9F));
+            DrawRectangleRoundedLines(bubble, 0.3F, 8, BLACK);
 
             Vector2 trianglePoints[3] = {
                 {screenPos.x - 8, bubble.y + bubble.height},
@@ -328,12 +329,12 @@ void GUI::Map::drawBroadcastMessages(const Camera3D &camera)
                 {screenPos.x, bubble.y + bubble.height + 10}
             };
 
-            DrawTriangle(trianglePoints[0], trianglePoints[1], trianglePoints[2], Fade(WHITE, 0.9f));
+            DrawTriangle(trianglePoints[0], trianglePoints[1], trianglePoints[2], Fade(WHITE, 0.9F));
             DrawTriangleLines(trianglePoints[0], trianglePoints[1], trianglePoints[2], BLACK);
 
             Vector2 textPos = {
-                bubble.x + (bubble.width - textWidth) / 2.0f,
-                bubble.y + (bubble.height - 16) / 2.0f
+                bubble.x + (bubble.width - textWidth) / 2.0F,
+                bubble.y + (bubble.height - 16) / 2.0F
             };
 
             DrawText(message.c_str(), static_cast<int>(textPos.x), static_cast<int>(textPos.y), 16, BLACK);

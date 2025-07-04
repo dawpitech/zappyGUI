@@ -36,7 +36,7 @@
  * @note If data is nullptr, the function safely returns without modification
  * @note The data is appended to the existing buffer content
  */
-void GUI::CommunicationBuffer::append_data(const char* data)
+void GUI::CommunicationBuffer::append_data(const char *data)
 {
     if (data != nullptr)
         _input_buffer += data;
@@ -57,7 +57,7 @@ void GUI::CommunicationBuffer::append_data(const char* data)
  * @note The data is appended to the existing buffer content
  * @note No null checking is required as std::string is passed by reference
  */
-void GUI::CommunicationBuffer::append_data(const std::string& data)
+void GUI::CommunicationBuffer::append_data(const std::string &data)
 {
     _input_buffer += data;
 }
@@ -97,9 +97,8 @@ bool GUI::CommunicationBuffer::has_complete_message() const
 std::string GUI::CommunicationBuffer::extract_next_message()
 {
     size_t pos = _input_buffer.find('\n');
-    if (pos == std::string::npos) {
+    if (pos == std::string::npos)
         return "";
-    }
 
     std::string message = _input_buffer.substr(0, pos);
     _input_buffer = _input_buffer.substr(pos + 1);
@@ -133,9 +132,8 @@ std::vector<std::string> GUI::CommunicationBuffer::extract_all_messages()
 
     while (has_complete_message()) {
         std::string message = extract_next_message();
-        if (!message.empty()) {
+        if (!message.empty())
             messages.push_back(message);
-        }
     }
 
     return messages;

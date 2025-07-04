@@ -20,9 +20,11 @@ class CommunicationBuffer {
         CommunicationBuffer(const CommunicationBuffer&) = delete;
         CommunicationBuffer &operator=(const CommunicationBuffer&) = delete;
         
-        void append_data(const char* data);
-        void append_data(const std::string& data);
-        bool has_complete_message() const;
+        void append_data(const char *data);
+        void append_data(const std::string &data);
+
+        [[nodiscard]] bool has_complete_message() const;
+        
         std::string extract_next_message();
         std::vector<std::string> extract_all_messages();
         

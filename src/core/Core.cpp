@@ -48,9 +48,8 @@ GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _serve
             } catch (const std::out_of_range &) {
                 throw CoreError("Invalid port: number out of range");
             }
-        } else if (arg == "-h") {
+        } else if (arg == "-h")
             _hostname = argv[i + 1];
-        }
     }
 
     if (_port == 0 || _hostname.empty())
@@ -132,7 +131,6 @@ void GUI::Core::handle_server_message(const std::string &message)
         _mapInfo.width = width;
         _mapInfo.height = height;
         std::cout << "Map size: " << width << "x" << height << std::endl;
-
     } else if (command == "bct") {
         int x;
         int y;
@@ -211,9 +209,8 @@ void GUI::Core::handle_server_message(const std::string &message)
         int q6;
         iss >> player_id_str >> x >> y >> q0 >> q1 >> q2 >> q3 >> q4 >> q5 >> q6;
 
-        if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end()) {
+        if (_gameInfo.players.find(player_id_str) != _gameInfo.players.end())
             _gameInfo.players[player_id_str].setInventory({q0, q1, q2, q3, q4, q5, q6});
-        }
 
         std::cout << "Player " << player_id_str << " inventory at ("
                   << x << "," << y << "): " << q0 << " " << q1 << " " << q2
@@ -285,14 +282,12 @@ void GUI::Core::handle_server_message(const std::string &message)
         int x;
         int y;
         iss >> egg_id_str >> player_id_str >> x >> y;
-
         EggInfo egg;
         egg.id = egg_id_str;
         egg.player_id = player_id_str;
         egg.x = x;
         egg.y = y;
         _gameInfo.eggs[egg_id_str] = egg;
-
         std::cout << "New egg " << egg_id_str << " laid by " << player_id_str
                   << " at (" << x << "," << y << ")" << std::endl;
     } else if (command == "ebo") {
@@ -347,14 +342,14 @@ void GUI::Core::drawInfoOverlay()
 {
     if (!_showInfoOverlay) return;
 
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
-    const int overlayWidth = 400;
-    const int overlayHeight = 600;
+    const int screenWidth = WINDOW_WIDTH;
+    const int screenHeight = WINDOW_HEIGHT;
+    const int overlayWidth = OVERLAY_WIDTH;
+    const int overlayHeight = OVERLAY_HEIGHT;
     const int overlayX = screenWidth - overlayWidth - 20;
     const int overlayY = 20;
 
-    DrawRectangle(overlayX, overlayY, overlayWidth, overlayHeight, Fade(BLACK, 0.8f));
+    DrawRectangle(overlayX, overlayY, overlayWidth, overlayHeight, Fade(BLACK, 0.8F));
     DrawRectangleLines(overlayX, overlayY, overlayWidth, overlayHeight, WHITE);
 
     int yOffset = overlayY + 20;
@@ -437,13 +432,13 @@ void GUI::Core::send_command(const std::string& command)
  */
 void GUI::Core::drawDeathMessages()
 {
-    float currentTime = GetTime();
+    double currentTime = GetTime();
     int y = 500;
 
     for (auto it = _deathMessages.begin(); it != _deathMessages.end(); ) {
-        if (currentTime - it->timestamp > 5.0f) {
+        if (currentTime - it->timestamp > 5.0F)
             it = _deathMessages.erase(it);
-        } else {
+        else {
             DrawText(it->text.c_str(), 45, y, 20, RED);
             y += 25;
             ++it;
@@ -474,11 +469,11 @@ void GUI::Core::drawDeathMessages()
  */
 void GUI::Core::run()
 {
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
-    float zoom = 30.0f;
-    const float minZoom = 5.0f;
-    const float maxZoom = 100.0f;
+    const int screenWidth = WINDOW_WIDTH;
+    const int screenHeight = WINDOW_HEIGHT;
+    float zoom = 30.0F;
+    const float minZoom = 5.0F;
+    const float maxZoom = 100.0F;
 
     raylib::Window window(screenWidth, screenHeight, "Zappy-Pi");
     Model backgroundModel = LoadModel("assets/background.glb");
@@ -492,10 +487,10 @@ void GUI::Core::run()
     std::unique_ptr<GUI::Map> map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0f);
 
     raylib::Camera3D camera(
-        {10.0f, 20.0f, 30.0f},  // position
-        {(float)mapWidth / 2, (float)mapHeight / 2, 0.0f},     // target
-        {0.0f, 1.0f, 0.0f},     // up vector
-        45.0f, CAMERA_PERSPECTIVE
+        {10.0F, 20.0F, 30.0F},  // position
+        {(float)mapWidth / 2, (float)mapHeight / 2, 0.0F},     // target
+        {0.0F, 1.0F, 0.0F},     // up vector
+        45.0F, CAMERA_PERSPECTIVE
     );
 
     std::cout << "Connecting to " << _hostname << ":" << _port << std::endl;
@@ -507,24 +502,22 @@ void GUI::Core::run()
     send_command("tna");
     send_command("sgt");
 
-    while (!window.ShouldClose())
+    while (!raylib::Window::ShouldClose())
     {
         for (auto &player : this->_gameInfo.players)
-        {
             send_command("ppo " + player.first);
-        }
 
         float wheelMove = raylib::Mouse::GetWheelMove();
         if (wheelMove != 0) {
-            zoom -= wheelMove * 2.0f;
+            zoom -= wheelMove * 2.0F;
             if (zoom < minZoom) zoom = minZoom;
             if (zoom > maxZoom) zoom = maxZoom;
             Vector3 dir = Vector3Normalize(Vector3Subtract(camera.position, camera.target));
             camera.position = Vector3Add(camera.target, Vector3Scale(dir, zoom));
         }
 
-        camera.up = { 0.0f, 1.0f, 0.0f };
-        camera.fovy = 45.0f;
+        camera.up = { 0.0F, 1.0F, 0.0F };
+        camera.fovy = 45.0F;
         camera.projection = CAMERA_PERSPECTIVE;
 
         if (raylib::Keyboard::IsKeyPressed(KEY_I))
@@ -532,7 +525,7 @@ void GUI::Core::run()
 
         if (_connected && _network_manager->poll_for_data())
         {
-            char buffer[4096];
+            char buffer[NETWORK_BUFFER_SIZE];
             ssize_t bytes_read = _network_manager->receive_data(buffer, sizeof(buffer) - 1);
             if (bytes_read <= 0) {
                 std::cout << "Server disconnected" << std::endl;
@@ -554,9 +547,9 @@ void GUI::Core::run()
                     std::cout << "Map size: " << mapWidth << "x" << mapHeight << std::endl;
                     gridReady = true;
 
-                    map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0f);
+                    map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0F);
 
-                    camera.target = {(float)mapWidth / 2, 0.0f, (float)mapHeight / 2};
+                    camera.target = {(float)mapWidth / 2, 0.0F, (float)mapHeight / 2};
                 }
 
                 handle_server_message(message);
@@ -571,7 +564,7 @@ void GUI::Core::run()
 
         BeginMode3D(camera);
 
-        DrawModel(backgroundModel, { 0.0f, -50.0f, 0.0f }, 0.5f, WHITE);
+        DrawModel(backgroundModel, { 0.0F, -50.0F, 0.0F }, 0.5F, WHITE);
         if (gridReady)
         {
             map->updateTileData(_mapInfo.tiles);

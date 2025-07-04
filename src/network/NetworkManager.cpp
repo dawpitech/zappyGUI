@@ -93,7 +93,7 @@ bool GUI::NetworkManager::authenticate()
         return false;
     }
 
-    char buffer[1024];
+    char buffer[NETWORK_BUFFER_SIZE];
     ssize_t bytes_read = recv(_socket_fd, buffer, sizeof(buffer) - 1, 0);
     if (bytes_read <= 0) {
         std::cerr << "Failed to receive WELCOME message" << std::endl;
@@ -103,12 +103,12 @@ bool GUI::NetworkManager::authenticate()
     buffer[bytes_read] = '\0';
     std::cout << "Received: " << buffer;
 
-    if (std::string(buffer) != "WELCOME\n") {
+    if (std::string(buffer) != WELCOME_MSG) {
         std::cerr << "Expected WELCOME, got: " << buffer << std::endl;
         return false;
     }
 
-    const char* graphic_cmd = "GRAPHIC\n";
+    const char *graphic_cmd = GRAPHIC_MSG;
     if (send(_socket_fd, graphic_cmd, 8, 0) != 8) {
         std::cerr << "Failed to send GRAPHIC command" << std::endl;
         return false;
@@ -165,9 +165,8 @@ bool GUI::NetworkManager::send_command(const std::string& command)
  */
 ssize_t GUI::NetworkManager::receive_data(char* buffer, size_t buffer_size)
 {
-    if (_socket_fd == -1) {
+    if (_socket_fd == -1)
         return -1;
-    }
 
     return recv(_socket_fd, buffer, buffer_size - 1, 0);
 }
@@ -188,9 +187,8 @@ ssize_t GUI::NetworkManager::receive_data(char* buffer, size_t buffer_size)
  */
 bool GUI::NetworkManager::poll_for_data(int timeout_ms)
 {
-    if (_socket_fd == -1) {
+    if (_socket_fd == -1) 
         return false;
-    }
 
     struct pollfd pfd;
     pfd.fd = _socket_fd;

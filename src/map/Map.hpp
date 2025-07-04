@@ -18,6 +18,23 @@ namespace GUI {
     struct EggInfo;
 
     class Map {
+        public:
+            Map(std::size_t width, std::size_t height, float tileSize = 1.0F);
+            ~Map() = default;
+
+            void drawGround();
+            void drawResources();
+            void drawEggs();
+            void drawPlayers();
+            void drawBroadcastMessages(const Camera3D &camera);
+            void drawResourceMultipliers(const Camera3D &camera);
+
+            void updateTileData(const std::map<std::pair<int, int>, GUI::TileInfo> &tiles);
+            void updatePlayerData(const std::unordered_map<std::string, GUI::Player> &players);
+            void updateEggData(const std::unordered_map<std::string, GUI::EggInfo> &eggs);
+
+            void render();
+            void renderUI(const Camera3D &camera);
 
         private:
             std::size_t _width;
@@ -38,24 +55,5 @@ namespace GUI {
             std::map<std::pair<int, int>, GUI::TileInfo> _tileData;
             std::unordered_map<std::string, GUI::Player> _playerData;
             std::unordered_map<std::string, GUI::EggInfo> _eggData;
-
-            void drawGround();
-            void drawResources();
-            void drawEggs();
-            void drawPlayers();
-
-        public:
-            Map(std::size_t width, std::size_t height, float tileSize = 1.0f);
-            ~Map() = default;
-
-            std::size_t get_width() const { return _width; }
-            std::size_t get_height() const { return _height; }
-            void updateTileData(const std::map<std::pair<int, int>, GUI::TileInfo> &tiles);
-            void updatePlayerData(const std::unordered_map<std::string, GUI::Player> &players);
-            void updateEggData(const std::unordered_map<std::string, GUI::EggInfo> &eggs);
-            void render();
-            void renderUI(const Camera3D &camera);
-            void drawBroadcastMessages(const Camera3D &camera);
-            void drawResourceMultipliers(const Camera3D &camera);
     };
 } // namespace GUI

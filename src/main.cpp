@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include "core/Core.hpp"
+#include "macros.hpp"
 
 /**
  * @brief Displays the usage help message
@@ -59,18 +60,18 @@ static void display_help(void)
  */
 static int check_args(int argc, char **argv)
 {
-    if (argc != 5 || argv[0] == nullptr ||
+    if (argc != NB_ARGS || argv[0] == nullptr ||
         argv[1] == nullptr || argv[2] == nullptr ||
         argv[3] == nullptr || argv[4] == nullptr) {
             display_help();
-            return 84;
+            return EPITECH_FAILURE;
         }
     if ((std::string(argv[1]) != "-p" && std::string(argv[1]) != "-h") ||
         (std::string(argv[3]) != "-p" && std::string(argv[3]) != "-h")) {
         display_help();
-        return 84;
+        return EPITECH_FAILURE;
     }
-    return 0;
+    return EPITECH_SUCCESS;
 }
 
 /**
@@ -107,6 +108,6 @@ static int check_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
     if (check_args(argc, argv) == 84)
-        return 84;
+        return EPITECH_FAILURE;
     return execute_zappygui(argv);
 }

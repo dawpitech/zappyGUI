@@ -1,0 +1,22 @@
+#pragma once
+
+#define SUCCESS 0
+#define FAILURE -1
+
+#define EPITECH_SUCCESS 0
+#define EPITECH_FAILURE 84
+
+#define NB_ARGS 5
+
+#define BROADCAST_DURATION 3
+
+#define NETWORK_BUFFER_SIZE 4096
+
+#define WELCOME_MSG "WELCOME\n"
+#define GRAPHIC_MSG "GRAPHIC\n"
+
+#define WINDOW_HEIGHT 720
+#define WINDOW_WIDTH 1280
+
+#define OVERLAY_HEIGHT 600
+#define OVERLAY_WIDTH 400
