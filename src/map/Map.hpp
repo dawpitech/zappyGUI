@@ -50,11 +50,12 @@ namespace GUI {
 
             std::size_t get_width() const { return _width; }
             std::size_t get_height() const { return _height; }
-            void updateTileData(const std::map<std::pair<int, int>, GUI::TileInfo>& tiles);
-            void updatePlayerData(const std::unordered_map<std::string, GUI::Player>& players);
-            void updateEggData(const std::unordered_map<std::string, GUI::EggInfo>& eggs);
+            void updateTileData(const std::map<std::pair<int, int>, GUI::TileInfo> &tiles);
+            void updatePlayerData(const std::unordered_map<std::string, GUI::Player> &players);
+            void updateEggData(const std::unordered_map<std::string, GUI::EggInfo> &eggs);
             void render();
             void renderUI(const Camera3D &camera);
-            void drawBroadcastMessages(const Camera3D& camera);
+            void drawBroadcastMessages(const Camera3D &camera);
+            void drawResourceMultipliers(const Camera3D &camera);
     };
 } // namespace GUI

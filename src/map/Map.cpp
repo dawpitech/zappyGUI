@@ -126,7 +126,9 @@ void GUI::Map::drawResources()
         for (size_t i = 0; i < tile.resources.size() && i < 7; ++i) {
             int resourceCount = tile.resources[i];
             if (resourceCount > 0) {
-                for (int count = 0; count < resourceCount && count < 5; ++count) {
+                int visualCount = (resourceCount > 1) ? 1 : std::min(resourceCount, 5);
+                
+                for (int count = 0; count < visualCount; ++count) {
                     Vector3 resourcePos = {
                         basePos.x + ((count % 3) - 1) * 0.15f + ((i % 2) * 0.1f),
                         basePos.y + 0.05f,
@@ -151,6 +153,51 @@ void GUI::Map::drawResources()
         }
     }
 }
+
+/**
+ * @brief Draws resource multipliers in 2D screen space
+ *
+ * Renders multiplicator text (e.g., "x7") above resource positions when there
+ * are multiple instances of the same resource on a tile. The text is displayed
+ * in 2D screen space with a black outline for better visibility.
+ *
+ * @param camera The 3D camera used for world-to-screen conversion
+ */
+void GUI::Map::drawResourceMultipliers(const Camera3D &camera)
+{
+    for (const auto& [pos, tile] : _tileData) {
+        int x = pos.first;
+        int y = pos.second;
+        Vector3 basePos = { static_cast<float>(x) * _tileSize, 0.1f, static_cast<float>(y) * _tileSize };
+
+        for (size_t i = 0; i < tile.resources.size() && i < 7; ++i) {
+            int resourceCount = tile.resources[i];
+            
+            if (resourceCount > 1) {
+                Vector3 textPos = {
+                    basePos.x + ((i % 2) * 0.1f),
+                    basePos.y + 0.3f,
+                    basePos.z + ((i / 2) * 0.1f)
+                };
+
+                std::string multiplierText = "x" + std::to_string(resourceCount);
+                
+                Vector2 screenPos = GetWorldToScreen(textPos, camera);
+                
+                int fontSize = 18;
+                Vector2 textSize = MeasureTextEx(GetFontDefault(), multiplierText.c_str(), fontSize, 1.0f);
+                
+                DrawText(multiplierText.c_str(), screenPos.x - textSize.x/2 - 1, screenPos.y - textSize.y/2 - 1, fontSize, BLACK);
+                DrawText(multiplierText.c_str(), screenPos.x - textSize.x/2 + 1, screenPos.y - textSize.y/2 - 1, fontSize, BLACK);
+                DrawText(multiplierText.c_str(), screenPos.x - textSize.x/2 - 1, screenPos.y - textSize.y/2 + 1, fontSize, BLACK);
+                DrawText(multiplierText.c_str(), screenPos.x - textSize.x/2 + 1, screenPos.y - textSize.y/2 + 1, fontSize, BLACK);
+                
+                DrawText(multiplierText.c_str(), screenPos.x - textSize.x/2, screenPos.y - textSize.y/2, fontSize, WHITE);
+            }
+        }
+    }
+}
+
 
 /**
  * @brief Draws all eggs on the map
@@ -245,7 +292,7 @@ void GUI::Map::drawPlayers()
  *
  * @param camera The 3D camera used for world-to-screen conversion
  */
-void GUI::Map::drawBroadcastMessages(const Camera3D& camera)
+void GUI::Map::drawBroadcastMessages(const Camera3D &camera)
 {
     for (auto& [id, player] : _playerData) {
         const_cast<Player&>(player).clearBroadcastIfExpired();
@@ -303,7 +350,7 @@ void GUI::Map::drawBroadcastMessages(const Camera3D& camera)
  *
  * @param tiles A map containing tile positions as keys and TileInfo as values
  */
-void GUI::Map::updateTileData(const std::map<std::pair<int, int>, TileInfo>& tiles)
+void GUI::Map::updateTileData(const std::map<std::pair<int, int>, TileInfo> &tiles)
 {
     _tileData = tiles;
 }
@@ -317,7 +364,7 @@ void GUI::Map::updateTileData(const std::map<std::pair<int, int>, TileInfo>& til
  *
  * @param players An unordered map containing player IDs as keys and Player objects as values
  */
-void GUI::Map::updatePlayerData(const std::unordered_map<std::string, Player>& players)
+void GUI::Map::updatePlayerData(const std::unordered_map<std::string, Player> &players)
 {
     _playerData = players;
 }
@@ -331,7 +378,7 @@ void GUI::Map::updatePlayerData(const std::unordered_map<std::string, Player>& p
  *
  * @param eggs An unordered map containing egg IDs as keys and EggInfo objects as values
  */
-void GUI::Map::updateEggData(const std::unordered_map<std::string, EggInfo>& eggs)
+void GUI::Map::updateEggData(const std::unordered_map<std::string, EggInfo> &eggs)
 {
     _eggData = eggs;
 }
@@ -367,7 +414,8 @@ void GUI::Map::render()
  *
  * @param camera The 3D camera used for world-to-screen position conversion
  */
-void GUI::Map::renderUI(const Camera3D& camera)
+void GUI::Map::renderUI(const Camera3D &camera)
 {
     drawBroadcastMessages(camera);
+    drawResourceMultipliers(camera);
 }
