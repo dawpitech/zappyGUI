@@ -168,9 +168,9 @@ void GUI::Core::handle_server_message(const std::string &message)
         int level;
         iss >> player_id_str >> x >> y >> orientation >> level >> team_name;
 
+        _audio.play("newPlayer");
         GUI::Player player(x, y, player_id_str, team_name, orientation, level);
         _gameInfo.players[player_id_str] = player;
-
         std::cout << "Player " << player_id_str << " connected at ("
                   << x << "," << y << ") team: " << team_name << std::endl;
     } else if (command == "ppo") {
@@ -219,21 +219,24 @@ void GUI::Core::handle_server_message(const std::string &message)
                   << x << "," << y << "): " << q0 << " " << q1 << " " << q2
                   << " " << q3 << " " << q4 << " " << q5 << " " << q6 << std::endl;
     } else if (command == "pex") {
+        _audio.play("playerExpulsion");
         std::string player_id_str;
         iss >> player_id_str;
         std::cout << "Player " << player_id_str << " expelled" << std::endl;
     } else if (command == "pbc") {
+        _audio.play("broadcast");
         std::string idStr;
         std::string msg;
 
         iss >> idStr;
         std::getline(iss, msg);
-        if (!msg.empty() && msg[0] == ' ') msg.erase(0, 1);
-        _audio.play("broadcast");
+        if (!msg.empty() && msg[0] == ' ')
+            msg.erase(0, 1);
         auto it = _gameInfo.players.find(idStr);
         if (it != _gameInfo.players.end())
             it->second.setBroadcastMessage(msg);
     } else if (command == "pic") {
+        _audio.play("incantationStart");
         int x;
         int y;
         int level;
@@ -246,6 +249,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         }
         std::cout << std::endl;
     } else if (command == "pie") {
+        _audio.play("incantationEnd");
         int x;
         int y;
         int result;
@@ -309,6 +313,7 @@ void GUI::Core::handle_server_message(const std::string &message)
         _clock->setTimeUnit(time_unit);
         std::cout << "Time unit: " << time_unit << std::endl;
     } else if (command == "seg") {
+        _audio.play("endGame");
         std::string team_name;
         iss >> team_name;
         _gameInfo.winner = team_name;

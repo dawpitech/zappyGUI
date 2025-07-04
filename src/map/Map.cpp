@@ -41,7 +41,7 @@ GUI::Map::Map(std::size_t width, std::size_t height, float tileSize)
         column.resize(height);
 
     try {
-        _playerModel = std::make_unique<raylib::Model>("assets/test.glb");
+        _playerModel = std::make_unique<raylib::Model>("assets/player.glb");
         _eggModel = std::make_unique<raylib::Model>("assets/egg.glb");
         _linemateModel = std::make_unique<raylib::Model>("assets/firstmineral.glb");
         _deraumereModel = std::make_unique<raylib::Model>("assets/secondmineral.glb");
