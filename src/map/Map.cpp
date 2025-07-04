@@ -37,12 +37,11 @@ GUI::Map::Map(std::size_t width, std::size_t height, float tileSize)
     : _width(width), _height(height), _tileSize(tileSize)
 {
     _grid.resize(width);
-    _eggModel = std::make_unique<raylib::Model>("assets/egg.glb");
-    _playerModel = std::make_unique<raylib::Model>("assets/player.glb");
     for (auto &column : _grid)
         column.resize(height);
 
     try {
+        _playerModel = std::make_unique<raylib::Model>("assets/test.glb");
         _eggModel = std::make_unique<raylib::Model>("assets/egg.glb");
         _linemateModel = std::make_unique<raylib::Model>("assets/firstmineral.glb");
         _deraumereModel = std::make_unique<raylib::Model>("assets/secondmineral.glb");
@@ -53,7 +52,7 @@ GUI::Map::Map(std::size_t width, std::size_t height, float tileSize)
         _foodModel = std::make_unique<raylib::Model>("assets/food.glb");
 
     } catch (const std::exception& e) {
-        std::cerr << "Erreur lors du chargement des modèles 3D: " << e.what() << std::endl;
+        std::cerr << "Failed to load assets: " << e.what() << std::endl;
     }
 }
 
@@ -226,7 +225,7 @@ void GUI::Map::drawPlayers()
             case 3: orientationDegree = 0.0F; break; // South
             case 4: orientationDegree = 270.0F; break; // West
         }
-        _playerModel->Draw(playerPos, {0, 1, 0}, orientationDegree, {1.0F, 1.0F, 1.0F}, WHITE);
+        _playerModel->Draw(playerPos, {0, 1, 0}, orientationDegree, {1.0F, 1.0F, 1.0F}, playerColor);
     }
 }
 
