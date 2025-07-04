@@ -475,7 +475,7 @@ void GUI::Core::run()
     const float minZoom = 5.0f;
     const float maxZoom = 100.0f;
 
-    raylib::Window window(screenWidth, screenHeight, "Zappy GUI - 3D Grid");
+    raylib::Window window(screenWidth, screenHeight, "Zappy-Pi");
     Model backgroundModel = LoadModel("assets/background.glb");
 
     SetTargetFPS(60);
