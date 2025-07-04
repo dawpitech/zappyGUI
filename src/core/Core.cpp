@@ -241,11 +241,21 @@ void GUI::Core::handle_server_message(const std::string &message)
         int y;
         int level;
         iss >> x >> y >> level;
+        
+        IncantationInfo incantation;
+        incantation.x = x;
+        incantation.y = y;
+        incantation.level = level;
+        incantation.start_time = GetTime();
+        _gameInfo.activeIncantations[{x, y}] = incantation;
+        
         std::cout << "Incantation started at (" << x << "," << y << ") level " << level;
         std::string player_id_str;
         while (iss >> player_id_str) {
-            if (player_id_str[0] == '#')
+            if (player_id_str[0] == '#') {
+                incantation.player_ids.push_back(player_id_str);
                 std::cout << " player " << player_id_str;
+            }
         }
         std::cout << std::endl;
     } else if (command == "pie") {
@@ -254,6 +264,12 @@ void GUI::Core::handle_server_message(const std::string &message)
         int y;
         int result;
         iss >> x >> y >> result;
+        
+        auto it = _gameInfo.activeIncantations.find({x, y});
+        if (it != _gameInfo.activeIncantations.end()) {
+            _gameInfo.activeIncantations.erase(it);
+        }
+        
         std::cout << "Incantation ended at (" << x << "," << y << ") result: "
                   << (result != 0 ? "success" : "failure") << std::endl;
     } else if (command == "pfk") {
@@ -379,6 +395,8 @@ void GUI::Core::drawInfoOverlay()
     DrawText(TextFormat("Players: %d", (int)_gameInfo.players.size()), overlayX + 20, yOffset, 14, LIGHTGRAY);
     yOffset += lineHeight;
     DrawText(TextFormat("Eggs: %d", (int)_gameInfo.eggs.size()), overlayX + 20, yOffset, 14, LIGHTGRAY);
+    yOffset += lineHeight;
+    DrawText(TextFormat("Active Incantations: %d", (int)_gameInfo.activeIncantations.size()), overlayX + 20, yOffset, 14, LIGHTGRAY);
     yOffset += lineHeight;
 
     if (!_gameInfo.winner.empty()) {
@@ -577,6 +595,7 @@ void GUI::Core::run()
             map->updateTileData(_mapInfo.tiles);
             map->updatePlayerData(_gameInfo.players);
             map->updateEggData(_gameInfo.eggs);
+            map->updateIncantationData(_gameInfo.activeIncantations); // Nouvelle fonction pour passer les incantations
             map->render();
         }
 

@@ -44,6 +44,8 @@ namespace GUI {
             void drawEggs();
             void drawPlayers();
 
+            std::map<std::pair<int, int>, IncantationInfo> _activeIncantations;
+
         public:
             Map(std::size_t width, std::size_t height, float tileSize = 1.0f);
             ~Map() = default;
@@ -57,5 +59,7 @@ namespace GUI {
             void renderUI(const Camera3D &camera);
             void drawBroadcastMessages(const Camera3D &camera);
             void drawResourceMultipliers(const Camera3D &camera);
+            void updateIncantationData(const std::map<std::pair<int, int>, IncantationInfo> &incantations);
+            bool isTileInIncantation(int x, int y) const;
     };
 } // namespace GUI

@@ -419,3 +419,14 @@ void GUI::Map::renderUI(const Camera3D &camera)
     drawBroadcastMessages(camera);
     drawResourceMultipliers(camera);
 }
+
+
+void GUI::Map::updateIncantationData(const std::map<std::pair<int, int>, IncantationInfo>& incantations)
+{
+    _activeIncantations = incantations;
+}
+
+bool GUI::Map::isTileInIncantation(int x, int y) const
+{
+    return _activeIncantations.find({x, y}) != _activeIncantations.end();
+}

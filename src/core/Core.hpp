@@ -23,6 +23,14 @@ namespace GUI {
     class NetworkManager;
     class CommunicationBuffer;
 
+    struct IncantationInfo {
+        int x;
+        int y;
+        int level;
+        float start_time;
+        std::vector<std::string> player_ids;
+    };
+
     struct TileInfo {
         int x, y;
         std::vector<int> resources;
@@ -49,6 +57,7 @@ namespace GUI {
         int timeUnit = 0;
         std::vector<std::string> teams;
         std::unordered_map<std::string, Player> players;
+        std::map<std::pair<int, int>, IncantationInfo> activeIncantations;
         std::unordered_map<std::string, EggInfo> eggs;
         std::string winner;
     };
@@ -75,6 +84,10 @@ namespace GUI {
 
             GUI::AudioManager &getAudioManager() { 
                 return _audio;
+            }
+
+            const std::map<std::pair<int, int>, IncantationInfo> &getActiveIncantations() const {
+                return _gameInfo.activeIncantations;
             }
 
         private:
