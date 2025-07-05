@@ -476,9 +476,9 @@ void GUI::Core::run()
     const float maxZoom = 100.0F;
 
     raylib::Window window(screenWidth, screenHeight, "Zappy-Pi");
-    Model backgroundModel = LoadModel("assets/background.glb");
-
-    SetTargetFPS(60);
+    Model backgroundModel;
+    
+    initializeWindow(backgroundModel);
 
     int mapWidth = 10;
     int mapHeight = 10;
@@ -487,108 +487,167 @@ void GUI::Core::run()
     std::unique_ptr<GUI::Map> map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0f);
 
     raylib::Camera3D camera(
-        {10.0F, 20.0F, 30.0F},  // position
-        {(float)mapWidth / 2, (float)mapHeight / 2, 0.0F},     // target
-        {0.0F, 1.0F, 0.0F},     // up vector
+        {10.0F, 20.0F, 30.0F},
+        {(float)mapWidth / 2, (float)mapHeight / 2, 0.0F},
+        {0.0F, 1.0F, 0.0F},
         45.0F, CAMERA_PERSPECTIVE
     );
 
-    std::cout << "Connecting to " << _hostname << ":" << _port << std::endl;
-    if (!connect_to_server())
-        throw CoreError("Failed to connect to server");
-
-    send_command("msz");
-    send_command("mct");
-    send_command("tna");
-    send_command("sgt");
+    connectToServer();
+    sendInitialCommands();
 
     while (!raylib::Window::ShouldClose())
     {
         for (auto &player : this->_gameInfo.players)
             send_command("ppo " + player.first);
 
-        float wheelMove = raylib::Mouse::GetWheelMove();
-        if (wheelMove != 0) {
-            zoom -= wheelMove * 2.0F;
-            if (zoom < minZoom) zoom = minZoom;
-            if (zoom > maxZoom) zoom = maxZoom;
-            Vector3 dir = Vector3Normalize(Vector3Subtract(camera.position, camera.target));
-            camera.position = Vector3Add(camera.target, Vector3Scale(dir, zoom));
-        }
-
-        camera.up = { 0.0F, 1.0F, 0.0F };
-        camera.fovy = 45.0F;
-        camera.projection = CAMERA_PERSPECTIVE;
-
-        if (raylib::Keyboard::IsKeyPressed(KEY_I))
-            _showInfoOverlay = !_showInfoOverlay;
-
-        if (_connected && _network_manager->poll_for_data())
-        {
-            char buffer[NETWORK_BUFFER_SIZE];
-            ssize_t bytes_read = _network_manager->receive_data(buffer, sizeof(buffer) - 1);
-            if (bytes_read <= 0) {
-                std::cout << "Server disconnected" << std::endl;
-                _connected = false;
-                break;
-            }
-
-            buffer[bytes_read] = '\0';
-            _comm_buffer->append_data(buffer);
-
-            auto messages = _comm_buffer->extract_all_messages();
-            for (const auto& message : messages) {
-                std::istringstream iss(message);
-                std::string command;
-                iss >> command;
-
-                if (command == "msz") {
-                    iss >> mapWidth >> mapHeight;
-                    std::cout << "Map size: " << mapWidth << "x" << mapHeight << std::endl;
-                    gridReady = true;
-
-                    map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0F);
-
-                    camera.target = {(float)mapWidth / 2, 0.0F, (float)mapHeight / 2};
-                }
-
-                handle_server_message(message);
-            }
-        }
-
-        if (raylib::Mouse::IsButtonDown(MOUSE_BUTTON_RIGHT))
-            camera.Update(CAMERA_ORBITAL);
-
-        window.BeginDrawing();
-        window.ClearBackground(RAYWHITE);
-
-        BeginMode3D(camera);
-
-        DrawModel(backgroundModel, { 0.0F, -50.0F, 0.0F }, 0.5F, WHITE);
-        if (gridReady)
-        {
-            map->updateTileData(_mapInfo.tiles);
-            map->updatePlayerData(_gameInfo.players);
-            map->updateEggData(_gameInfo.eggs);
-            map->render();
-        }
-
-        EndMode3D();
-
-        if (gridReady)
-            map->renderUI(camera);
-
-        DrawText(TextFormat("Timer: %.2f", _clock->getElapsedSeconds()), 35, 60, 20, RED);
-        DrawText("Hold right mouse button and drag to move camera", 10, 10, 20, DARKGRAY);
-        DrawText("Press 'I' to toggle information overlay", 10, 35, 20, DARKGRAY);
-
-        if (_showInfoOverlay)
-            drawInfoOverlay();
-
-        drawDeathMessages();
-
-        window.EndDrawing();
+        handleCameraZoom(camera, zoom, minZoom, maxZoom);
+        handleKeyboardInput();
+        processNetworkData(mapWidth, mapHeight, gridReady, map, camera);
+        handleMouseCamera(camera);
+        renderScene(window, camera, backgroundModel, map, gridReady);
+        renderUI(window, map, camera, gridReady);
     }
+}
+
+void GUI::Core::initializeWindow(Model &backgroundModel)
+{
+    backgroundModel = LoadModel("assets/background.glb");
+    SetTargetFPS(60);
+}
+
+void GUI::Core::initializeCamera(raylib::Camera3D &camera, int mapWidth, int mapHeight, float zoom)
+{
+    camera.up = { 0.0F, 1.0F, 0.0F };
+    camera.fovy = 45.0F;
+    camera.projection = CAMERA_PERSPECTIVE;
+    camera.target = {(float)mapWidth / 2, 0.0F, (float)mapHeight / 2};
+    
+    Vector3 dir = Vector3Normalize(Vector3Subtract(camera.position, camera.target));
+    camera.position = Vector3Add(camera.target, Vector3Scale(dir, zoom));
+}
+
+void GUI::Core::connectToServer()
+{
+    std::cout << "Connecting to " << _hostname << ":" << _port << std::endl;
+    if (!connect_to_server())
+        throw CoreError("Failed to connect to server");
+}
+
+void GUI::Core::sendInitialCommands()
+{
+    send_command("msz");
+    send_command("mct");
+    send_command("tna");
+    send_command("sgt");
+}
+
+void GUI::Core::handleCameraZoom(raylib::Camera3D &camera, float &zoom, float minZoom, float maxZoom)
+{
+    float wheelMove = raylib::Mouse::GetWheelMove();
+    if (wheelMove != 0) {
+        zoom -= wheelMove * 2.0F;
+        if (zoom < minZoom) zoom = minZoom;
+        if (zoom > maxZoom) zoom = maxZoom;
+        Vector3 dir = Vector3Normalize(Vector3Subtract(camera.position, camera.target));
+        camera.position = Vector3Add(camera.target, Vector3Scale(dir, zoom));
+    }
+
+    camera.up = { 0.0F, 1.0F, 0.0F };
+    camera.fovy = 45.0F;
+    camera.projection = CAMERA_PERSPECTIVE;
+}
+
+void GUI::Core::handleKeyboardInput()
+{
+    if (raylib::Keyboard::IsKeyPressed(KEY_I))
+        _showInfoOverlay = !_showInfoOverlay;
+}
+
+void GUI::Core::processNetworkData(int &mapWidth, int &mapHeight, bool &gridReady, 
+                                  std::unique_ptr<GUI::Map> &map, raylib::Camera3D &camera)
+{
+    if (!_connected || !_network_manager->poll_for_data())
+        return;
+
+    char buffer[NETWORK_BUFFER_SIZE];
+    ssize_t bytes_read = _network_manager->receive_data(buffer, sizeof(buffer) - 1);
+    
+    if (bytes_read <= 0) {
+        std::cout << "Server disconnected" << std::endl;
+        _connected = false;
+        return;
+    }
+
+    buffer[bytes_read] = '\0';
+    _comm_buffer->append_data(buffer);
+
+    auto messages = _comm_buffer->extract_all_messages();
+    for (const auto& message : messages)
+        processServerMessage(message, mapWidth, mapHeight, gridReady, map, camera);
+}
+
+void GUI::Core::processServerMessage(const std::string &message, int &mapWidth, int &mapHeight, 
+                                    bool &gridReady, std::unique_ptr<GUI::Map> &map, 
+                                    raylib::Camera3D &camera)
+{
+    std::istringstream iss(message);
+    std::string command;
+    iss >> command;
+
+    if (command == "msz") {
+        iss >> mapWidth >> mapHeight;
+        std::cout << "Map size: " << mapWidth << "x" << mapHeight << std::endl;
+        gridReady = true;
+
+        map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0F);
+        camera.target = {(float)mapWidth / 2, 0.0F, (float)mapHeight / 2};
+    }
+
+    handle_server_message(message);
+}
+
+void GUI::Core::handleMouseCamera(raylib::Camera3D &camera)
+{
+    if (raylib::Mouse::IsButtonDown(MOUSE_BUTTON_RIGHT))
+        camera.Update(CAMERA_ORBITAL);
+}
+
+void GUI::Core::renderScene(raylib::Window &window, raylib::Camera3D &camera, Model &backgroundModel, 
+                           std::unique_ptr<GUI::Map> &map, bool gridReady)
+{
+    window.BeginDrawing();
+    window.ClearBackground(RAYWHITE);
+
+    BeginMode3D(camera);
+
+    DrawModel(backgroundModel, { 0.0F, -50.0F, 0.0F }, 0.5F, WHITE);
+    
+    if (gridReady) {
+        map->updateTileData(_mapInfo.tiles);
+        map->updatePlayerData(_gameInfo.players);
+        map->updateEggData(_gameInfo.eggs);
+        map->render();
+    }
+
+    EndMode3D();
+}
+
+void GUI::Core::renderUI(raylib::Window &window, std::unique_ptr<GUI::Map> &map, raylib::Camera3D &camera, bool gridReady)
+{
+    if (gridReady)
+        map->renderUI(camera);
+
+    DrawText(TextFormat("Timer: %.2f", _clock->getElapsedSeconds()), 35, 60, 20, RED);
+    DrawText("Hold right mouse button and drag to move camera", 10, 10, 20, DARKGRAY);
+    DrawText("Press 'I' to toggle information overlay", 10, 35, 20, DARKGRAY);
+
+    if (_showInfoOverlay)
+        drawInfoOverlay();
+
+    drawDeathMessages();
+
+    window.EndDrawing();
 }
 
 /**

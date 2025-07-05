@@ -23,6 +23,7 @@
 namespace GUI {
     class NetworkManager;
     class CommunicationBuffer;
+    class Map;
 
     struct TileInfo {
         int x, y;
@@ -77,6 +78,22 @@ namespace GUI {
             GUI::AudioManager &getAudioManager() { 
                 return _audio;
             }
+
+            void initializeWindow(Model &backgroundModel);
+            void initializeCamera(raylib::Camera3D &camera, int mapWidth, int mapHeight, float zoom);
+            void connectToServer();
+            void sendInitialCommands();
+            void handleCameraZoom(raylib::Camera3D &camera, float &zoom, float minZoom, float maxZoom);
+            void handleKeyboardInput();
+            void processNetworkData(int &mapWidth, int &mapHeight, bool &gridReady, 
+                                std::unique_ptr<GUI::Map> &map, raylib::Camera3D &camera);
+            void processServerMessage(const std::string &message, int &mapWidth, int &mapHeight, 
+                                    bool &gridReady, std::unique_ptr<GUI::Map> &map, 
+                                    raylib::Camera3D &camera);
+            void handleMouseCamera(raylib::Camera3D &camera);
+            void renderScene(raylib::Window &window, raylib::Camera3D &camera, Model &backgroundModel, 
+                            std::unique_ptr<GUI::Map> &map, bool gridReady);
+            void renderUI(raylib::Window& window, std::unique_ptr<GUI::Map> &map, raylib::Camera3D &camera, bool gridReady);
 
         private:
             std::unique_ptr<NetworkManager> _network_manager;
