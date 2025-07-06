@@ -455,6 +455,26 @@ void GUI::Core::drawDeathMessages()
     }
 }
 
+/**
+ * @brief Main execution loop of the Core class
+ *
+ * This method starts the core components of the Zappy GUI application.
+ * It performs the following steps:
+ * - Sets the running flag to true to indicate the application is active.
+ * - Establishes a connection to the game server.
+ * - Sends initial setup commands to the server after connecting.
+ * - Launches the network handling logic in a separate thread to
+ *   manage incoming/outgoing network communication asynchronously.
+ * - Runs the graphics rendering loop in the main thread.
+ * - Waits for the network thread to finish before exiting.
+ *
+ * This design allows the GUI to remain responsive by separating network
+ * operations from rendering, leveraging multi-threading.
+ *
+ * @note The network thread is launched before starting the graphics loop.
+ * @note The method blocks until the graphics thread finishes and the
+ *       network thread has been joined.
+ */
 void GUI::Core::run()
 {
     _running.store(true);
@@ -470,6 +490,19 @@ void GUI::Core::run()
         _network_thread.join();
 }
 
+/**
+ * @brief Initializes the application window and loads the background model
+ *
+ * This method sets up the main window for the GUI application by loading
+ * a 3D background model from the specified asset file and configuring
+ * the target frame rate for rendering.
+ *
+ * @param backgroundModel Reference to a Model object that will be loaded with the background
+ *
+ * @note Loads the model from "assets/background.glb"
+ * @note Sets the target FPS to 60 for smooth rendering
+ * @note Any exceptions thrown during model loading are caught and logged
+ */
 void GUI::Core::initializeWindow(Model &backgroundModel)
 {
     try {
@@ -480,6 +513,24 @@ void GUI::Core::initializeWindow(Model &backgroundModel)
     }
 }
 
+/**
+ * @brief Initializes the 3D camera parameters for the GUI application
+ *
+ * Configures the camera's orientation, field of view, projection type,
+ * and position based on the size of the game map and a zoom factor.
+ * The camera is positioned to look at the center of the map from a
+ * calculated distance.
+ *
+ * @param camera Reference to a raylib::Camera3D object to be initialized
+ * @param mapWidth Width of the game map (used to center the camera target)
+ * @param mapHeight Height of the game map (used to center the camera target)
+ * @param zoom Distance multiplier controlling the zoom level of the camera
+ *
+ * @note The camera up vector is set to (0,1,0) to represent the vertical axis
+ * @note The camera projection is set to perspective mode
+ * @note The camera target is set to the center of the map at ground level (y=0)
+ * @note The camera position is calculated by scaling the direction vector by zoom
+ */
 void GUI::Core::initializeCamera(raylib::Camera3D &camera, int mapWidth, int mapHeight, float zoom)
 {
     camera.up = { 0.0F, 1.0F, 0.0F };
@@ -491,6 +542,18 @@ void GUI::Core::initializeCamera(raylib::Camera3D &camera, int mapWidth, int map
     camera.position = Vector3Add(camera.target, Vector3Scale(dir, zoom));
 }
 
+/**
+ * @brief Establishes a connection to the configured server
+ *
+ * Attempts to connect to the server using the stored hostname and port.
+ * Prints the connection attempt information to the standard output.
+ * Throws a CoreError exception if the connection fails.
+ *
+ * @throws CoreError if unable to connect to the server
+ *
+ * @note Relies on the internal method connect_to_server() to perform the actual connection
+ * @note _hostname and _port must be set prior to calling this method
+ */
 void GUI::Core::connectToServer()
 {
     std::cout << "Connecting to " << _hostname << ":" << _port << std::endl;
@@ -498,6 +561,22 @@ void GUI::Core::connectToServer()
         throw CoreError("Failed to connect to server");
 }
 
+/**
+ * @brief Sends the initial set of commands to the server
+ *
+ * This method sends a predefined sequence of commands immediately after
+ * establishing the connection to initialize the game state and retrieve
+ * essential information from the server.
+ *
+ * The commands sent are:
+ * - "msz": Request map size
+ * - "mct": Request content of the entire map
+ * - "tna": Request team names
+ * - "sgt": Request game time unit
+ *
+ * @note Assumes an active connection is already established
+ * @note Relies on send_command() to send each command to the server
+ */
 void GUI::Core::sendInitialCommands()
 {
     send_command("msz");
@@ -506,6 +585,25 @@ void GUI::Core::sendInitialCommands()
     send_command("sgt");
 }
 
+/**
+ * @brief Handles zooming of the 3D camera based on mouse wheel input
+ *
+ * This method adjusts the camera's zoom level when the mouse wheel is scrolled.
+ * It modifies the zoom factor within the specified minimum and maximum bounds,
+ * and updates the camera's position accordingly to maintain the zoom effect.
+ *
+ * After updating the position, it ensures the camera's up vector, field of view,
+ * and projection type remain consistent.
+ *
+ * @param camera Reference to the Camera3D object to update
+ * @param zoom Reference to the current zoom level, modified by this method
+ * @param minZoom The minimum allowed zoom level
+ * @param maxZoom The maximum allowed zoom level
+ *
+ * @note The zoom is controlled by the mouse wheel movement multiplied by a factor of 2.0
+ * @note The camera's position is recalculated based on the zoom to move closer or further from the target
+ * @note The camera's up vector is reset to (0, 1, 0) and field of view to 45 degrees after zoom
+ */
 void GUI::Core::handleCameraZoom(raylib::Camera3D &camera, float &zoom, float minZoom, float maxZoom)
 {
     float wheelMove = raylib::Mouse::GetWheelMove();
@@ -522,18 +620,57 @@ void GUI::Core::handleCameraZoom(raylib::Camera3D &camera, float &zoom, float mi
     camera.projection = CAMERA_PERSPECTIVE;
 }
 
+/**
+ * @brief Handles keyboard input for toggling the info overlay display
+ *
+ * This method checks if the 'I' key has been pressed and toggles
+ * the visibility state of the info overlay accordingly.
+ *
+ * @note Uses raylib keyboard input detection
+ * @note Toggles the boolean flag _showInfoOverlay each time the key is pressed
+ */
 void GUI::Core::handleKeyboardInput()
 {
     if (raylib::Keyboard::IsKeyPressed(KEY_I))
         _showInfoOverlay = !_showInfoOverlay;
 }
 
+/**
+ * @brief Updates the camera based on mouse input for orbital movement
+ *
+ * This method checks if the right mouse button is held down, and if so,
+ * updates the camera using an orbital control scheme to allow rotating
+ * around the target point.
+ *
+ * @param camera Reference to the Camera3D object to update
+ *
+ * @note Uses raylib's CAMERA_ORBITAL mode for camera update
+ * @note Requires the right mouse button to be pressed continuously
+ */
 void GUI::Core::handleMouseCamera(raylib::Camera3D &camera)
 {
     if (raylib::Mouse::IsButtonDown(MOUSE_BUTTON_RIGHT))
         camera.Update(CAMERA_ORBITAL);
 }
 
+/**
+ * @brief Renders the 3D scene including background and game elements
+ * 
+ * This function handles all drawing for the current frame. It clears the window,
+ * sets up the 3D rendering mode with the given camera, draws the background model,
+ * and if the game grid is ready, updates and renders the map with its tiles, players,
+ * and eggs data. The map updates are synchronized with a mutex to ensure thread safety.
+ * 
+ * @param window Reference to the raylib window used for drawing
+ * @param camera Reference to the 3D camera defining the viewpoint
+ * @param backgroundModel Reference to the background 3D model to be drawn
+ * @param map Unique pointer to the Map object that manages the game grid rendering
+ * @param gridReady Boolean indicating whether the game grid data is ready to be rendered
+ * 
+ * @note The method locks _game_data_mutex to safely access shared game data.
+ * @note Drawing is done using raylib functions for 3D rendering.
+ * @note The background model is drawn at position (0, -100, 0) with scale 1.
+ */
 void GUI::Core::renderScene(raylib::Window &window, raylib::Camera3D &camera, Model &backgroundModel, 
                            std::unique_ptr<GUI::Map> &map, bool gridReady)
 {
@@ -555,6 +692,24 @@ void GUI::Core::renderScene(raylib::Window &window, raylib::Camera3D &camera, Mo
     EndMode3D();
 }
 
+/**
+ * @brief Renders the user interface elements on top of the 3D scene
+ * 
+ * This function draws the UI components such as the map's UI elements,
+ * a timer showing elapsed game time, informational overlays, death messages,
+ * and user instructions. Access to shared game data is synchronized using a mutex.
+ * 
+ * @param window Reference to the raylib window where UI elements are drawn
+ * @param map Unique pointer to the Map object responsible for rendering UI-related elements
+ * @param camera Reference to the 3D camera, used for UI rendering on the map
+ * @param gridReady Boolean indicating if the game grid data is ready and UI can be rendered
+ * 
+ * @note Locks _game_data_mutex to ensure thread-safe access to shared data.
+ * @note Timer text is drawn in red at position (35, 60) with font size 20.
+ * @note Instructions and toggles are drawn in dark gray near the top-left corner.
+ * @note Calls drawInfoOverlay() and drawDeathMessages() to render additional UI elements if applicable.
+ * @note Ends the drawing phase by calling window.EndDrawing().
+ */
 void GUI::Core::renderUI(raylib::Window &window, std::unique_ptr<GUI::Map> &map, raylib::Camera3D &camera, bool gridReady)
 {
     if (gridReady) {
@@ -575,6 +730,24 @@ void GUI::Core::renderUI(raylib::Window &window, std::unique_ptr<GUI::Map> &map,
     window.EndDrawing();
 }
 
+/**
+ * @brief Thread function handling incoming network data
+ *
+ * This function runs in a dedicated thread, continuously polling the server
+ * for incoming data as long as the core is running and the connection is active.
+ * When data is received, it is appended to the communication buffer, parsed into
+ * complete messages, and each message is processed to update the game state in a
+ * thread-safe manner. Additionally, it periodically sends position requests for all
+ * players to keep their positions updated.
+ *
+ * The thread sleeps briefly when not connected or when no data is available to avoid busy-waiting.
+ *
+ * @note Uses _running atomic boolean to control the thread lifecycle.
+ * @note Uses _connected flag to check connection status.
+ * @note Accesses shared game data under mutex protection (_game_data_mutex).
+ * @note Polls network data with a timeout of 100 milliseconds.
+ * @note Handles server disconnection by resetting _connected.
+ */
 void GUI::Core::network_thread_function()
 {
     while (_running.load()) {
@@ -608,12 +781,43 @@ void GUI::Core::network_thread_function()
     }
 }
 
+/**
+ * @brief Thread-safe update of game data from a server message
+ *
+ * This method ensures exclusive access to shared game data by locking
+ * the _game_data_mutex before processing the incoming server message.
+ * It delegates actual message handling to handle_server_message().
+ *
+ * @param message The raw server message string to process
+ *
+ * @note Protects shared data to prevent race conditions in multithreaded context
+ */
 void GUI::Core::update_game_data_thread_safe(const std::string &message)
 {
     std::lock_guard<std::mutex> lock(_game_data_mutex);
     handle_server_message(message);
 }
 
+/**
+ * @brief Main graphics loop executed in a separate thread
+ *
+ * This function initializes the rendering window, loads background and music,
+ * manages the camera, and handles user input for zoom and camera control.
+ * It continuously updates and renders the 3D scene and UI until the window
+ * should close or the application stops running.
+ *
+ * Responsibilities:
+ * - Initialize raylib window and audio
+ * - Load and play background music with looping and volume control
+ * - Manage camera parameters and zoom level based on user input
+ * - Detect window close events and update the running state
+ * - Lock game data mutex to safely update map dimensions and state
+ * - Render the 3D scene and UI overlays each frame
+ *
+ * @note Runs in its own thread alongside the network thread
+ * @note Uses _running atomic boolean to control the loop lifetime
+ * @note Protects access to shared game data using _game_data_mutex
+ */
 void GUI::Core::graphics_thread_function()
 {
     const int screenWidth = WINDOW_WIDTH;

@@ -1,3 +1,10 @@
+/*
+** EPITECH PROJECT, 2025
+** ZappyGUI
+** File description:
+** Audio.hpp
+*/
+
 #pragma once
 
 #include "../../include/raylib-cpp.hpp"

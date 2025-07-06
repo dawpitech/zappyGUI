@@ -1,3 +1,25 @@
+/**
+ * @file NetworkManager.cpp
+ * @brief Implementation of the NetworkManager class for the ZappyGUI project
+ * @author EPITECH PROJECT, 2025
+ * @date 2025
+ *
+ * This file contains the implementation of the NetworkManager class which
+ * handles network communication for the ZappyGUI application. It provides
+ * functionalities to create and manage a TCP connection to a Zappy server,
+ * send and receive messages, and perform authentication handshakes.
+ *
+ * The class manages socket creation, connection setup, data transmission,
+ * and polling for incoming data using system calls such as socket(),
+ * connect(), send(), recv(), and poll().
+ *
+ * It ensures proper resource management by closing sockets on destruction
+ * and provides mechanisms to check connection status and broadcast messages.
+ *
+ * Network operations are designed to be non-blocking or with configurable
+ * timeouts for responsive GUI behavior.
+ */
+
 /*
 ** EPITECH PROJECT, 2025
 ** ZAPPY GUI
