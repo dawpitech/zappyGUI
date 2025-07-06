@@ -45,7 +45,7 @@ GUI::NetworkManager::~NetworkManager()
  * @note This method expects hostname to be a valid IPv4 address string
  * @note Any existing connection will be closed if this method fails
  */
-bool GUI::NetworkManager::create_and_connect(const std::string& hostname, int port)
+bool GUI::NetworkManager::create_and_connect(const std::string &hostname, int port)
 {
     _socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_socket_fd == -1) {
@@ -131,7 +131,7 @@ bool GUI::NetworkManager::authenticate()
  * @note A newline character is automatically appended to the command
  * @note The method verifies that all bytes were sent successfully
  */
-bool GUI::NetworkManager::send_command(const std::string& command)
+bool GUI::NetworkManager::send_command(const std::string &command)
 {
     if (_socket_fd == -1) {
         std::cerr << "Cannot send command: not connected" << std::endl;
@@ -163,7 +163,7 @@ bool GUI::NetworkManager::send_command(const std::string& command)
  * @note Returns -1 if no connection is established
  * @note The caller is responsible for null-terminating the received data if needed
  */
-ssize_t GUI::NetworkManager::receive_data(char* buffer, size_t buffer_size)
+ssize_t GUI::NetworkManager::receive_data(char *buffer, size_t buffer_size)
 {
     if (_socket_fd == -1)
         return -1;

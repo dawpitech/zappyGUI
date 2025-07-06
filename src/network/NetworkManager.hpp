@@ -18,11 +18,11 @@ namespace GUI {
             NetworkManager(const NetworkManager&) = delete;
             NetworkManager& operator=(const NetworkManager&) = delete;
             
-            bool create_and_connect(const std::string& hostname, int port);
+            bool create_and_connect(const std::string &hostname, int port);
             bool authenticate();
-            bool send_command(const std::string& command);
+            bool send_command(const std::string &command);
             
-            ssize_t receive_data(char* buffer, size_t buffer_size);
+            ssize_t receive_data(char *buffer, size_t buffer_size);
             
             bool poll_for_data(int timeout_ms = 100);
             

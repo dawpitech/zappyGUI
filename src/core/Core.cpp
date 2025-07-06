@@ -23,6 +23,15 @@
 #include <sstream>
 #include "../map/Map.hpp"
 
+/**
+ * @brief Constructor of the Core class
+ * @param argv Array of command line arguments
+ *
+ * Initializes the Core with connection parameters (-p for port, -h for hostname).
+ * Creates network, communication and clock managers.
+ *
+ * @throw CoreError If -p or -h arguments are missing or invalid
+ */
 GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _server_fd(-1), _showInfoOverlay(false)
 {
     _network_manager = std::make_unique<NetworkManager>();
@@ -47,6 +56,11 @@ GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _serve
         throw CoreError("Missing -p or -h argument");
 }
 
+/**
+ * @brief Destructor of the Core class
+ *
+ * Cleans up resources used by the Core.
+ */
 GUI::Core::~Core()
 {
     _running.store(false);
@@ -54,6 +68,13 @@ GUI::Core::~Core()
         _network_thread.join();
 }
 
+/**
+ * @brief Establishes connection to the Zappy server
+ * @return true if connection and authentication succeed, false otherwise
+ *
+ * Uses the NetworkManager to create a connection to the specified server
+ * and performs the required authentication.
+ */
 bool GUI::Core::connect_to_server()
 {
     if (!_network_manager->create_and_connect(_hostname, _port))
@@ -66,6 +87,35 @@ bool GUI::Core::connect_to_server()
     return true;
 }
 
+/**
+ * @brief Processes messages received from the server
+ * @param message Message received from the server to process
+ *
+ * Parses and processes all types of messages from the Zappy protocol:
+ * - msz : Map size
+ * - bct : Tile content
+ * - tna : Team name
+ * - pnw : New player
+ * - ppo : Player position
+ * - plv : Player level
+ * - pin : Player inventory
+ * - pex : Player expulsion
+ * - pbc : Broadcast message
+ * - pic : Incantation start
+ * - pie : Incantation end
+ * - pfk : Egg laying
+ * - pdr : Resource drop
+ * - pgt : Resource collection
+ * - pdi : Player death
+ * - enw : New egg
+ * - ebo : Egg hatching
+ * - edi : Egg death
+ * - sgt : Time unit
+ * - seg : End of game
+ * - smg : Server message
+ * - suc : Unknown command
+ * - sbp : Bad parameters
+ */
 void GUI::Core::handle_server_message(const std::string &message)
 {
     if (message.empty())
@@ -279,6 +329,18 @@ void GUI::Core::handle_server_message(const std::string &message)
     }
 }
 
+/**
+ * @brief Displays the game information overlay
+ *
+ * Draws a user interface overlay containing:
+ * - Map information (size, number of tiles)
+ * - Game information (time unit, teams, players, eggs)
+ * - Teams list
+ * - Players list (limited to 10 for display)
+ * - Game winner if any
+ *
+ * The overlay is displayed only if _showInfoOverlay is true.
+ */
 void GUI::Core::drawInfoOverlay()
 {
     if (!_showInfoOverlay) return;
@@ -351,12 +413,26 @@ void GUI::Core::drawInfoOverlay()
     DrawText("Press 'I' to close", overlayX + 10, overlayY + overlayHeight - 30, 14, YELLOW);
 }
 
-void GUI::Core::send_command(const std::string& command)
+/**
+ * @brief Sends a command to the server
+ * @param command Command to send to the server
+ *
+ * Uses the NetworkManager to send the specified command to the server.
+ * Displays an error message if sending fails.
+ */
+void GUI::Core::send_command(const std::string &command)
 {
     if (!_network_manager->send_command(command))
         std::cerr << "Failed to send command: " << command << std::endl;
 }
 
+/**
+ * @brief Displays player death messages
+ *
+ * Draws player death messages on screen for 5 seconds.
+ * Messages are automatically removed after this delay.
+ * Messages are displayed in red starting from position (45, 500).
+ */
 void GUI::Core::drawDeathMessages()
 {
     double currentTime = GetTime();
@@ -526,7 +602,7 @@ void GUI::Core::network_thread_function()
     }
 }
 
-void GUI::Core::update_game_data_thread_safe(const std::string& message)
+void GUI::Core::update_game_data_thread_safe(const std::string &message)
 {
     std::lock_guard<std::mutex> lock(_game_data_mutex);
     handle_server_message(message);
@@ -597,6 +673,20 @@ void GUI::Core::graphics_thread_function()
     _running.store(false);
 }
 
+/**
+ * @brief Main entry point for Zappy GUI execution
+ * @param argv Array of command line arguments
+ * @return 0 on success, 1 on error
+ *
+ * Wrapper function that:
+ * 1. Creates a Core instance with the provided arguments
+ * 2. Starts GUI execution
+ * 3. Catches and displays any errors
+ *
+ * Expected arguments:
+ * - -p <port> : Server port
+ * - -h <hostname> : Server hostname
+ */
 int execute_zappygui(char **argv)
 {
     try {

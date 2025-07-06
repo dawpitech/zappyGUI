@@ -12,6 +12,7 @@
 #include "../audio/Audio.hpp"
 #include "../clock/Clock.hpp"
 #include "../macros.hpp"
+#include <atomic>
 #include <condition_variable>
 #include <exception>
 #include <map>
@@ -22,7 +23,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <atomic>
 
 namespace GUI {
     class NetworkManager;
@@ -125,12 +125,10 @@ namespace GUI {
             std::mutex _game_data_mutex;
             std::condition_variable _data_ready_cv;
             
-            // Thread functions
             void network_thread_function();
             void graphics_thread_function();
             
-            // Thread-safe data access
-            void update_game_data_thread_safe(const std::string& message);
+            void update_game_data_thread_safe(const std::string &message);
     };
 } // namespace GUI
 
