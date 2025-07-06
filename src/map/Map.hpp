@@ -19,6 +19,13 @@ namespace GUI {
 
     class Map {
         public:
+            class AssetError : public std::exception {
+                private:
+                    std::string _message;
+                public:
+                    AssetError(std::string  message) : _message(std::move(message)) {}
+                    [[nodiscard]] const char* what() const noexcept override { return _message.c_str(); }
+            };
             Map(std::size_t width, std::size_t height, float tileSize = 1.0F);
             ~Map() = default;
 

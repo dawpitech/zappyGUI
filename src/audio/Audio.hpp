@@ -1,12 +1,20 @@
 #pragma once
 
+#include "../../include/raylib-cpp.hpp"
 #include <map>
 #include <string>
-#include "../../include/raylib-cpp.hpp"
+#include <iostream>
 
 namespace GUI {
     class AudioManager {
     public:
+        class AudioError : public std::exception {
+                    private:
+                        std::string _message;
+                    public:
+                        AudioError(std::string  message) : _message(std::move(message)) {}
+                        [[nodiscard]] const char* what() const noexcept override { return _message.c_str(); }
+            };
         AudioManager();
         ~AudioManager();
 

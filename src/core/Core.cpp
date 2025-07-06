@@ -477,6 +477,20 @@ void GUI::Core::run()
 
     raylib::Window window(screenWidth, screenHeight, "Zappy-Pi");
     Model backgroundModel;
+
+    raylib::AudioDevice audio;
+    raylib::Music music;
+
+    try {
+        music = raylib::Music("assets/theme.wav");
+    } catch (const raylib::RaylibException &e) {
+        throw Core::CoreError(std::string("Unable to load music : ") + e.what());
+    }
+    music.SetLooping(true);
+    music.SetVolume(0.2F);
+
+    music.Play();
+
     
     initializeWindow(backgroundModel);
 
@@ -498,6 +512,7 @@ void GUI::Core::run()
 
     while (!raylib::Window::ShouldClose())
     {
+        music.Update();
         for (auto &player : this->_gameInfo.players)
             send_command("ppo " + player.first);
 
@@ -512,7 +527,12 @@ void GUI::Core::run()
 
 void GUI::Core::initializeWindow(Model &backgroundModel)
 {
-    backgroundModel = LoadModel("assets/background.glb");
+    try {
+        backgroundModel = LoadModel("assets/background.glb");
+        SetTargetFPS(60);
+    } catch (const std::exception &e) {
+        std::cerr << "Error during window initialization: " << e.what() << std::endl;
+    }
     SetTargetFPS(60);
 }
 
@@ -671,6 +691,12 @@ int execute_zappygui(char **argv)
         core.run();
     } catch (const GUI::Core::CoreError &error) {
         std::cerr << "Core error: " << error.what() << std::endl;
+        return 1;
+    } catch (const GUI::AudioManager::AudioError &error) {
+        std::cerr << "Audio error: " << error.what() << std::endl;
+        return 1;
+    } catch (const std::exception &error) {
+        std::cerr << "Error: " << error.what() << std::endl;
         return 1;
     }
     return 0;

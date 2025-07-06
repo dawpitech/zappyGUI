@@ -41,13 +41,18 @@
 GUI::AudioManager::AudioManager()
 {
     InitAudioDevice();
-    _sounds.emplace("newPlayer", raylib::Sound("assets/newPlayer.wav"));
-    _sounds.emplace("playerExpulsion", raylib::Sound("assets/deathPlayer.wav"));
-    _sounds.emplace("broadcast", raylib::Sound("assets/broadcast.wav"));
-    _sounds.emplace("incantationStart", raylib::Sound("assets/raaaah.wav"));
-    _sounds.emplace("incantationEnd", raylib::Sound("assets/incantationEnd.wav"));
-    _sounds.emplace("deathPlayer", raylib::Sound("assets/deathPlayer.wav"));
-    _sounds.emplace("endGame", raylib::Sound("assets/endGame.wav"));
+
+    try {
+        _sounds.emplace("newPlayer", raylib::Sound("assets/newPlayer.wav"));
+        _sounds.emplace("playerExpulsion", raylib::Sound("assets/deathPlayer.wav"));
+        _sounds.emplace("broadcast", raylib::Sound("assets/broadcast.wav"));
+        _sounds.emplace("incantationStart", raylib::Sound("assets/raaaah.wav"));
+        _sounds.emplace("incantationEnd", raylib::Sound("assets/incantationEnd.wav"));
+        _sounds.emplace("deathPlayer", raylib::Sound("assets/deathPlayer.wav"));
+        _sounds.emplace("endGame", raylib::Sound("assets/endGame.wav"));
+    } catch (const raylib::RaylibException &e) {
+        throw GUI::AudioManager::AudioError(std::string("Unable to load sound : ") + e.what());
+    }
 }
 
 GUI::AudioManager::~AudioManager()

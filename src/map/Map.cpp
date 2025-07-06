@@ -51,8 +51,8 @@ GUI::Map::Map(std::size_t width, std::size_t height, float tileSize)
         _thystameModel = std::make_unique<raylib::Model>("assets/sixthmineral.glb");
         _foodModel = std::make_unique<raylib::Model>("assets/food.glb");
 
-    } catch (const std::exception& e) {
-        std::cerr << "Failed to load assets: " << e.what() << std::endl;
+    } catch (const GUI::Map::AssetError &e) {
+        throw AssetError("Unable to load asset");
     }
 }
 

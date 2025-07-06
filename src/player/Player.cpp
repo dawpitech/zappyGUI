@@ -70,7 +70,7 @@ void GUI::Player::setOrientation(int o) {
 
 void GUI::Player::setBroadcastMessage(const std::string &message)
 {
- _broadcastMessage = message;
+    _broadcastMessage = message;
     _broadcastStartTime = std::chrono::steady_clock::now();
 }
 
