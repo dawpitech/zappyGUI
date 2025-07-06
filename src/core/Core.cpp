@@ -158,8 +158,13 @@ void GUI::Core::handle_server_message(const std::string &message)
     } else if (command == "tna") {
         std::string team_name;
         iss >> team_name;
-        _gameInfo.teams.push_back(team_name);
-        std::cout << "Team: " << team_name << std::endl;
+        
+        auto it = std::find(_gameInfo.teams.begin(), _gameInfo.teams.end(), team_name);
+        if (it == _gameInfo.teams.end()) {
+            _gameInfo.teams.push_back(team_name);
+            std::cout << "New team added: " << team_name << std::endl;
+        } else
+            std::cout << "Team already exists: " << team_name << std::endl;
     } else if (command == "pnw") {
         std::string player_id_str;
         std::string team_name;
@@ -387,6 +392,7 @@ void GUI::Core::drawInfoOverlay()
 
     DrawText("TEAMS:", overlayX + 10, yOffset, 16, WHITE);
     yOffset += lineHeight;
+
     for (const auto& team : _gameInfo.teams) {
         DrawText(team.c_str(), overlayX + 20, yOffset, 14, LIGHTGRAY);
         yOffset += lineHeight;
@@ -633,8 +639,8 @@ void GUI::Core::graphics_thread_function()
 
     initializeWindow(backgroundModel);
 
-    int mapWidth = 10;
-    int mapHeight = 10;
+    int mapWidth = 9;
+    int mapHeight = 9;
     bool gridReady = false;
 
     std::unique_ptr<GUI::Map> map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0f);

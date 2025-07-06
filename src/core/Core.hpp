@@ -12,6 +12,7 @@
 #include "../audio/Audio.hpp"
 #include "../clock/Clock.hpp"
 #include "../macros.hpp"
+#include <algorithm>
 #include <atomic>
 #include <condition_variable>
 #include <exception>
