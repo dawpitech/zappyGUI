@@ -23,15 +23,6 @@
 #include <sstream>
 #include "../map/Map.hpp"
 
-/**
- * @brief Constructor of the Core class
- * @param argv Array of command line arguments
- *
- * Initializes the Core with connection parameters (-p for port, -h for hostname).
- * Creates network, communication and clock managers.
- *
- * @throw CoreError If -p or -h arguments are missing or invalid
- */
 GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _server_fd(-1), _showInfoOverlay(false)
 {
     _network_manager = std::make_unique<NetworkManager>();
@@ -56,22 +47,13 @@ GUI::Core::Core(char **argv) : _port(0), _timeUnit(0), _connected(false), _serve
         throw CoreError("Missing -p or -h argument");
 }
 
-/**
- * @brief Destructor of the Core class
- *
- * Cleans up resources used by the Core.
- */
 GUI::Core::~Core()
 {
+    _running.store(false);
+    if (_network_thread.joinable())
+        _network_thread.join();
 }
 
-/**
- * @brief Establishes connection to the Zappy server
- * @return true if connection and authentication succeed, false otherwise
- *
- * Uses the NetworkManager to create a connection to the specified server
- * and performs the required authentication.
- */
 bool GUI::Core::connect_to_server()
 {
     if (!_network_manager->create_and_connect(_hostname, _port))
@@ -84,35 +66,6 @@ bool GUI::Core::connect_to_server()
     return true;
 }
 
-/**
- * @brief Processes messages received from the server
- * @param message Message received from the server to process
- *
- * Parses and processes all types of messages from the Zappy protocol:
- * - msz : Map size
- * - bct : Tile content
- * - tna : Team name
- * - pnw : New player
- * - ppo : Player position
- * - plv : Player level
- * - pin : Player inventory
- * - pex : Player expulsion
- * - pbc : Broadcast message
- * - pic : Incantation start
- * - pie : Incantation end
- * - pfk : Egg laying
- * - pdr : Resource drop
- * - pgt : Resource collection
- * - pdi : Player death
- * - enw : New egg
- * - ebo : Egg hatching
- * - edi : Egg death
- * - sgt : Time unit
- * - seg : End of game
- * - smg : Server message
- * - suc : Unknown command
- * - sbp : Bad parameters
- */
 void GUI::Core::handle_server_message(const std::string &message)
 {
     if (message.empty())
@@ -326,18 +279,6 @@ void GUI::Core::handle_server_message(const std::string &message)
     }
 }
 
-/**
- * @brief Displays the game information overlay
- *
- * Draws a user interface overlay containing:
- * - Map information (size, number of tiles)
- * - Game information (time unit, teams, players, eggs)
- * - Teams list
- * - Players list (limited to 10 for display)
- * - Game winner if any
- *
- * The overlay is displayed only if _showInfoOverlay is true.
- */
 void GUI::Core::drawInfoOverlay()
 {
     if (!_showInfoOverlay) return;
@@ -410,26 +351,12 @@ void GUI::Core::drawInfoOverlay()
     DrawText("Press 'I' to close", overlayX + 10, overlayY + overlayHeight - 30, 14, YELLOW);
 }
 
-/**
- * @brief Sends a command to the server
- * @param command Command to send to the server
- *
- * Uses the NetworkManager to send the specified command to the server.
- * Displays an error message if sending fails.
- */
 void GUI::Core::send_command(const std::string& command)
 {
     if (!_network_manager->send_command(command))
         std::cerr << "Failed to send command: " << command << std::endl;
 }
 
-/**
- * @brief Displays player death messages
- *
- * Draws player death messages on screen for 5 seconds.
- * Messages are automatically removed after this delay.
- * Messages are displayed in red starting from position (45, 500).
- */
 void GUI::Core::drawDeathMessages()
 {
     double currentTime = GetTime();
@@ -446,83 +373,19 @@ void GUI::Core::drawDeathMessages()
     }
 }
 
-/**
- * @brief Main execution function of the GUI
- *
- * Starts the main game loop which:
- * 1. Initializes the Raylib window (1280x720)
- * 2. Creates the 3D camera with orbital controls
- * 3. Connects to the server and sends initial commands
- * 4. Executes the main rendering loop which:
- *    - Handles user input (zoom, camera rotation, overlay)
- *    - Receives and processes server messages
- *    - Updates and displays the 3D map
- *    - Displays the user interface
- *    - Handles death messages
- *
- * Controls:
- * - Mouse wheel: Zoom in/out
- * - Right click + drag: Camera rotation
- * - I key: Toggle information overlay
- *
- * @throw CoreError If server connection fails
- */
 void GUI::Core::run()
 {
-    const int screenWidth = WINDOW_WIDTH;
-    const int screenHeight = WINDOW_HEIGHT;
-    float zoom = 30.0F;
-    const float minZoom = 5.0F;
-    const float maxZoom = 100.0F;
-
-    raylib::Window window(screenWidth, screenHeight, "Zappy-Pi");
-    Model backgroundModel;
-
-    raylib::AudioDevice audio;
-    raylib::Music music;
-
-    try {
-        music = raylib::Music("assets/theme.wav");
-    } catch (const raylib::RaylibException &e) {
-        throw Core::CoreError(std::string("Unable to load music : ") + e.what());
-    }
-    music.SetLooping(true);
-    music.SetVolume(0.2F);
-
-    music.Play();
-
+    _running.store(true);
     
-    initializeWindow(backgroundModel);
-
-    int mapWidth = 10;
-    int mapHeight = 10;
-    bool gridReady = false;
-
-    std::unique_ptr<GUI::Map> map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0f);
-
-    raylib::Camera3D camera(
-        {10.0F, 20.0F, 30.0F},
-        {(float)mapWidth / 2, (float)mapHeight / 2, 0.0F},
-        {0.0F, 1.0F, 0.0F},
-        45.0F, CAMERA_PERSPECTIVE
-    );
-
     connectToServer();
     sendInitialCommands();
-
-    while (!raylib::Window::ShouldClose())
-    {
-        music.Update();
-        for (auto &player : this->_gameInfo.players)
-            send_command("ppo " + player.first);
-
-        handleCameraZoom(camera, zoom, minZoom, maxZoom);
-        handleKeyboardInput();
-        processNetworkData(mapWidth, mapHeight, gridReady, map, camera);
-        handleMouseCamera(camera);
-        renderScene(window, camera, backgroundModel, map, gridReady);
-        renderUI(window, map, camera, gridReady);
-    }
+    
+    _network_thread = std::thread(&GUI::Core::network_thread_function, this);
+    
+    graphics_thread_function();
+    
+    if (_network_thread.joinable())
+        _network_thread.join();
 }
 
 void GUI::Core::initializeWindow(Model &backgroundModel)
@@ -584,49 +447,6 @@ void GUI::Core::handleKeyboardInput()
         _showInfoOverlay = !_showInfoOverlay;
 }
 
-void GUI::Core::processNetworkData(int &mapWidth, int &mapHeight, bool &gridReady, 
-                                  std::unique_ptr<GUI::Map> &map, raylib::Camera3D &camera)
-{
-    if (!_connected || !_network_manager->poll_for_data())
-        return;
-
-    char buffer[NETWORK_BUFFER_SIZE];
-    ssize_t bytes_read = _network_manager->receive_data(buffer, sizeof(buffer) - 1);
-    
-    if (bytes_read <= 0) {
-        std::cout << "Server disconnected" << std::endl;
-        _connected = false;
-        return;
-    }
-
-    buffer[bytes_read] = '\0';
-    _comm_buffer->append_data(buffer);
-
-    auto messages = _comm_buffer->extract_all_messages();
-    for (const auto& message : messages)
-        processServerMessage(message, mapWidth, mapHeight, gridReady, map, camera);
-}
-
-void GUI::Core::processServerMessage(const std::string &message, int &mapWidth, int &mapHeight, 
-                                    bool &gridReady, std::unique_ptr<GUI::Map> &map, 
-                                    raylib::Camera3D &camera)
-{
-    std::istringstream iss(message);
-    std::string command;
-    iss >> command;
-
-    if (command == "msz") {
-        iss >> mapWidth >> mapHeight;
-        std::cout << "Map size: " << mapWidth << "x" << mapHeight << std::endl;
-        gridReady = true;
-
-        map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0F);
-        camera.target = {(float)mapWidth / 2, 0.0F, (float)mapHeight / 2};
-    }
-
-    handle_server_message(message);
-}
-
 void GUI::Core::handleMouseCamera(raylib::Camera3D &camera)
 {
     if (raylib::Mouse::IsButtonDown(MOUSE_BUTTON_RIGHT))
@@ -644,6 +464,7 @@ void GUI::Core::renderScene(raylib::Window &window, raylib::Camera3D &camera, Mo
     DrawModel(backgroundModel, { 0.0F, -50.0F, 0.0F }, 0.5F, WHITE);
     
     if (gridReady) {
+        std::lock_guard<std::mutex> lock(_game_data_mutex);
         map->updateTileData(_mapInfo.tiles);
         map->updatePlayerData(_gameInfo.players);
         map->updateEggData(_gameInfo.eggs);
@@ -655,35 +476,128 @@ void GUI::Core::renderScene(raylib::Window &window, raylib::Camera3D &camera, Mo
 
 void GUI::Core::renderUI(raylib::Window &window, std::unique_ptr<GUI::Map> &map, raylib::Camera3D &camera, bool gridReady)
 {
-    if (gridReady)
+    if (gridReady) {
+        std::lock_guard<std::mutex> lock(_game_data_mutex);
         map->renderUI(camera);
-
+    }
+    std::lock_guard<std::mutex> lock(_game_data_mutex);
     DrawText(TextFormat("Timer: %.2f", _clock->getElapsedSeconds()), 35, 60, 20, RED);
-    DrawText("Hold right mouse button and drag to move camera", 10, 10, 20, DARKGRAY);
-    DrawText("Press 'I' to toggle information overlay", 10, 35, 20, DARKGRAY);
-
+        
     if (_showInfoOverlay)
         drawInfoOverlay();
 
     drawDeathMessages();
 
+    DrawText("Hold right mouse button and drag to move camera", 10, 10, 20, DARKGRAY);
+    DrawText("Press 'I' to toggle information overlay", 10, 35, 20, DARKGRAY);
+
     window.EndDrawing();
 }
 
-/**
- * @brief Main entry point for Zappy GUI execution
- * @param argv Array of command line arguments
- * @return 0 on success, 1 on error
- *
- * Wrapper function that:
- * 1. Creates a Core instance with the provided arguments
- * 2. Starts GUI execution
- * 3. Catches and displays any errors
- *
- * Expected arguments:
- * - -p <port> : Server port
- * - -h <hostname> : Server hostname
- */
+void GUI::Core::network_thread_function()
+{
+    while (_running.load()) {
+        if (!_connected) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+
+        if (!_network_manager->poll_for_data(100))
+            continue;
+
+        char buffer[NETWORK_BUFFER_SIZE];
+        ssize_t bytes_read = _network_manager->receive_data(buffer, sizeof(buffer) - 1);
+        
+        if (bytes_read <= 0) {
+            std::cout << "Server disconnected" << std::endl;
+            _connected = false;
+            continue;
+        }
+
+        buffer[bytes_read] = '\0';
+        _comm_buffer->append_data(buffer);
+
+        auto messages = _comm_buffer->extract_all_messages();
+        for (const auto& message : messages)
+            update_game_data_thread_safe(message);
+
+        std::lock_guard<std::mutex> lock(_game_data_mutex);
+        for (const auto &player : _gameInfo.players)
+            send_command("ppo " + player.first);
+    }
+}
+
+void GUI::Core::update_game_data_thread_safe(const std::string& message)
+{
+    std::lock_guard<std::mutex> lock(_game_data_mutex);
+    handle_server_message(message);
+}
+
+void GUI::Core::graphics_thread_function()
+{
+    const int screenWidth = WINDOW_WIDTH;
+    const int screenHeight = WINDOW_HEIGHT;
+    float zoom = 30.0F;
+    const float minZoom = 5.0F;
+    const float maxZoom = 100.0F;
+
+    raylib::Window window(screenWidth, screenHeight, "Zappy-Pi");
+    Model backgroundModel;
+
+    raylib::AudioDevice audio;
+    raylib::Music music;
+
+    try {
+        music = raylib::Music("assets/theme.wav");
+    } catch (const raylib::RaylibException &e) {
+        throw Core::CoreError(std::string("Unable to load music : ") + e.what());
+    }
+    music.SetLooping(true);
+    music.SetVolume(0.2F);
+    music.Play();
+
+    initializeWindow(backgroundModel);
+
+    int mapWidth = 10;
+    int mapHeight = 10;
+    bool gridReady = false;
+
+    std::unique_ptr<GUI::Map> map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0f);
+
+    raylib::Camera3D camera(
+        {10.0F, 20.0F, 30.0F},
+        {(float)mapWidth / 2, (float)mapHeight / 2, 0.0F},
+        {0.0F, 1.0F, 0.0F},
+        45.0F, CAMERA_PERSPECTIVE
+    );
+
+    while (!raylib::Window::ShouldClose() && _running.load())
+    {
+        music.Update();
+        
+        handleCameraZoom(camera, zoom, minZoom, maxZoom);
+        handleKeyboardInput();
+        handleMouseCamera(camera);
+        {
+            std::lock_guard<std::mutex> lock(_game_data_mutex);
+            if (_mapInfo.width != mapWidth || _mapInfo.height != mapHeight) {
+                mapWidth = _mapInfo.width;
+                mapHeight = _mapInfo.height;
+                if (mapWidth > 0 && mapHeight > 0) {
+                    gridReady = true;
+                    map = std::make_unique<GUI::Map>(mapWidth, mapHeight, 1.0F);
+                    camera.target = {(float)mapWidth / 2, 0.0F, (float)mapHeight / 2};
+                }
+            }
+        }
+        
+        renderScene(window, camera, backgroundModel, map, gridReady);
+        renderUI(window, map, camera, gridReady);
+    }
+    
+    _running.store(false);
+}
+
 int execute_zappygui(char **argv)
 {
     try {
