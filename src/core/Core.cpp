@@ -542,7 +542,7 @@ void GUI::Core::renderScene(raylib::Window &window, raylib::Camera3D &camera, Mo
 
     BeginMode3D(camera);
 
-    DrawModel(backgroundModel, { 0.0F, -50.0F, 0.0F }, 1.0F, WHITE);
+    DrawModel(backgroundModel, { 0.0F, -100.0F, 0.0F }, 1.0F, WHITE);
     
     if (gridReady) {
         std::lock_guard<std::mutex> lock(_game_data_mutex);
